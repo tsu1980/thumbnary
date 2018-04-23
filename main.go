@@ -25,7 +25,6 @@ var (
 	aHelpl              = flag.Bool("help", false, "Show help")
 	aPathPrefix         = flag.String("path-prefix", "/", "Url path prefix to listen to")
 	aCors               = flag.Bool("cors", false, "Enable CORS support")
-	aGzip               = flag.Bool("gzip", false, "Enable gzip compression (deprecated)")
 	aAuthForwarding     = flag.Bool("enable-auth-forwarding", false, "Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors")
 	aEnableURLSource    = flag.Bool("enable-url-source", false, "Enable remote HTTP URL image source processing")
 	aEnablePlaceholder  = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error")
@@ -82,7 +81,6 @@ Options:
   -v, -version              Show version
   -path-prefix <value>      Url path prefix to listen to [default: "/"]
   -cors                     Enable CORS support [default: false]
-  -gzip                     Enable gzip compression (deprecated) [default: false]
   -disable-endpoints        Comma separated endpoints to disable. E.g: form,crop,rotate,health [default: ""]
   -key <key>                Define API key for authorization
   -mount <path>             Mount server local directory
@@ -165,11 +163,6 @@ func main() {
 		MaxAllowedSize:     *aMaxAllowedSize,
 	}
 
-	// Show warning if gzip flag is passed
-	if *aGzip {
-		fmt.Println("warning: -gzip flag is deprecated and will not have effect")
-	}
-
 	// Create a memory release goroutine
 	if *aMRelease > 0 {
 		memoryRelease(*aMRelease)
@@ -228,12 +221,12 @@ func main() {
 	// Load image source providers
 	LoadSources(opts)
 
-    err1 := OpenDB(opts)
+	err1 := OpenDB(opts)
 	if err1 != nil {
 		exitWithError("failed to open database: %s", err1)
 	}
 
-    err1 = StartRedis(opts)
+	err1 = StartRedis(opts)
 	if err1 != nil {
 		exitWithError("failed to start redis: %s", err1)
 	}

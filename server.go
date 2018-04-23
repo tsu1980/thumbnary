@@ -19,7 +19,6 @@ type ServerOptions struct {
 	HTTPWriteTimeout   int
 	MaxAllowedSize     int
 	CORS               bool
-	Gzip               bool // deprecated
 	AuthForwarding     bool
 	EnableURLSource    bool
 	EnablePlaceholder  bool
@@ -97,15 +96,15 @@ func NewHTTPHandler(o ServerOptions) *MyHttpHandler {
 
 func (h *MyHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
-        Middleware(indexController, h.Options).ServeHTTP(w, r)
-        return
+		Middleware(indexController, h.Options).ServeHTTP(w, r)
+		return
 	}
 
 	if r.URL.Path == "/health" {
-        Middleware(healthController, h.Options).ServeHTTP(w, r)
-        return
+		Middleware(healthController, h.Options).ServeHTTP(w, r)
+		return
 	}
 
 	image := ImageMiddleware(h.Options)
-    image(ConvertImage).ServeHTTP(w, r)
+	image(ConvertImage).ServeHTTP(w, r)
 }
