@@ -42,7 +42,6 @@ var (
 	aKeyFile            = flag.String("keyfile", "", "TLS private key file path")
 	aAuthorization      = flag.String("authorization", "", "Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization")
 	aPlaceholder        = flag.String("placeholder", "", "Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200")
-	aDisableEndpoints   = flag.String("disable-endpoints", "", "Comma separated endpoints to disable. E.g: form,crop,rotate,health")
 	aHTTPCacheTTL       = flag.Int("http-cache-ttl", -1, "The TTL in seconds")
 	aReadTimeout        = flag.Int("http-read-timeout", 60, "HTTP read timeout in seconds")
 	aWriteTimeout       = flag.Int("http-write-timeout", 60, "HTTP write timeout in seconds")
@@ -58,14 +57,11 @@ Usage:
   thumbnary -p 80
   thumbnary -cors
   thumbnary -concurrency 10
-  thumbnary -path-prefix /api/v1
-  thumbnary -enable-url-source
-  thumbnary -disable-endpoints form,health,crop,rotate
-  thumbnary -enable-url-source -allowed-origins http://localhost,http://server.com
-  thumbnary -enable-url-source -enable-auth-forwarding
-  thumbnary -enable-url-source -authorization "Basic AwDJdL2DbwrD=="
+  thumbnary -allowed-origins http://localhost,http://server.com
+  thumbnary -enable-auth-forwarding
+  thumbnary -authorization "Basic AwDJdL2DbwrD=="
   thumbnary -enable-placeholder
-  thumbnary -enable-url-source -placeholder ./placeholder.jpg
+  thumbnary -placeholder ./placeholder.jpg
   thumbnary -enable-url-signature -url-signature-key 4f46feebafc4b5e988f131c4ff8b5997 -url-signature-salt 88f131c4ff8b59974f46feebafc4b5e9
   thumbnary -h | -help
   thumbnary -v | -version
@@ -76,14 +72,12 @@ Options:
   -h, -help                 Show help
   -v, -version              Show version
   -cors                     Enable CORS support [default: false]
-  -disable-endpoints        Comma separated endpoints to disable. E.g: form,crop,rotate,health [default: ""]
   -key <key>                Define API key for authorization
   -http-cache-ttl <num>     The TTL in seconds. Adds caching headers to locally served files.
   -http-read-timeout <num>  HTTP read timeout in seconds [default: 30]
   -http-write-timeout <num> HTTP write timeout in seconds [default: 30]
-  -enable-url-source        Restrict remote image source processing to certain origins (separated by commas)
   -enable-placeholder       Enable image response placeholder to be used in case of error [default: false]
-  -enable-auth-forwarding   Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors
+  -enable-auth-forwarding   Forwards X-Forward-Authorization or Authorization header to the image source server. Tip: secure your server from public access to prevent attack vectors
   -enable-url-signature     Enable URL signature (URL-safe Base64-encoded HMAC digest) [default: false]
   -url-signature-key        The URL signature key (32 characters minimum)
   -url-signature-salt       The URL signature salt (32 characters minimum)
@@ -161,11 +155,6 @@ func main() {
 	// Validate HTTP cache param, if present
 	if *aHTTPCacheTTL != -1 {
 		checkHttpCacheTtl(*aHTTPCacheTTL)
-	}
-
-	// Parse endpoint names to disabled, if present
-	if *aDisableEndpoints != "" {
-		opts.Endpoints = parseEndpoints(*aDisableEndpoints)
 	}
 
 	// Read placeholder image, if required
@@ -278,17 +267,6 @@ func parseOrigins(origins string) []*url.URL {
 		urls = append(urls, u)
 	}
 	return urls
-}
-
-func parseEndpoints(input string) Endpoints {
-	endpoints := Endpoints{}
-	for _, endpoint := range strings.Split(input, ",") {
-		endpoint = strings.ToLower(strings.TrimSpace(endpoint))
-		if endpoint != "" {
-			endpoints = append(endpoints, endpoint)
-		}
-	}
-	return endpoints
 }
 
 func memoryRelease(interval int) {

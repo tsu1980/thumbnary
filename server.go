@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -36,23 +35,7 @@ type ServerOptions struct {
 	Authorization      string
 	Placeholder        string
 	PlaceholderImage   []byte
-	Endpoints          Endpoints
 	AllowedOrigins     []*url.URL
-}
-
-// Endpoints represents a list of endpoint names to disable.
-type Endpoints []string
-
-// IsValid validates if a given HTTP request endpoint is valid or not.
-func (e Endpoints) IsValid(r *http.Request) bool {
-	parts := strings.Split(r.URL.Path, "/")
-	endpoint := parts[len(parts)-1]
-	for _, name := range e {
-		if endpoint == name {
-			return false
-		}
-	}
-	return true
 }
 
 func Server(o ServerOptions) error {
