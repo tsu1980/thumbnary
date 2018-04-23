@@ -48,7 +48,6 @@ var (
 	aConcurrency        = flag.Int("concurrency", 0, "Throttle concurrency limit per second")
 	aBurst              = flag.Int("burst", 100, "Throttle burst max cache size")
 	aMRelease           = flag.Int("mrelease", 30, "OS memory release interval in seconds")
-	aCpus               = flag.Int("cpus", runtime.GOMAXPROCS(-1), "Number of cpu cores to use")
 )
 
 const usage = `thumbnary %s
@@ -90,8 +89,6 @@ Options:
   -concurrency <num>        Throttle concurrency limit per second [default: disabled]
   -burst <num>              Throttle burst max cache size [default: 100]
   -mrelease <num>           OS memory release interval in seconds [default: 30]
-  -cpus <num>               Number of used cpu cores.
-                            (default for current machine is %d cores)
 `
 
 type URLSignature struct {
@@ -111,9 +108,6 @@ func main() {
 	if *aVers || *aVersl {
 		showVersion()
 	}
-
-	// Only required in Go < 1.5
-	runtime.GOMAXPROCS(*aCpus)
 
 	port := getPort(*aPort)
 	urlSignature := getURLSignature(*aURLSignatureKey, *aURLSignatureSalt)
