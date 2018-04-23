@@ -30,7 +30,7 @@ var (
 	aEnableURLSource    = flag.Bool("enable-url-source", false, "Enable remote HTTP URL image source processing")
 	aEnablePlaceholder  = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error")
 	aEnableURLSignature = flag.Bool("enable-url-signature", false, "Enable URL signature (URL-safe Base64-encoded HMAC digest)")
-	aNewUrlFormat       = flag.Bool("new-url-format", false, "Enable new url format")
+	aNewURLFormat       = flag.Bool("new-url-format", false, "Enable new url format")
 	aEnableOrigin       = flag.Bool("enable-origin", false, "Enable Origin future(with http source only)")
 	aOriginHostPattern  = flag.String("origin-host-pattern", ".*", "The regex pattern string for extract origin id from host name")
 	aRedisURL           = flag.String("redis-url", "", "The redis server url")
@@ -140,7 +140,7 @@ func main() {
 		EnableURLSource:    *aEnableURLSource,
 		EnablePlaceholder:  *aEnablePlaceholder,
 		EnableURLSignature: *aEnableURLSignature,
-		NewUrlFormat:       *aNewUrlFormat,
+		NewURLFormat:       *aNewURLFormat,
 		EnableOrigin:       *aEnableOrigin,
 		OriginHostPattern:  *aOriginHostPattern,
 		RedisURL:           *aRedisURL,

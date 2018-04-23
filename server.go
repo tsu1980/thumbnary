@@ -24,7 +24,7 @@ type ServerOptions struct {
 	EnableURLSource    bool
 	EnablePlaceholder  bool
 	EnableURLSignature bool
-	NewUrlFormat       bool
+	NewURLFormat       bool
 	EnableOrigin       bool
 	OriginHostPattern  string
 	RedisURL           string

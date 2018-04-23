@@ -15,7 +15,7 @@ type SourceConfig struct {
 	Type            ImageSourceType
 	AllowedOrigings []*url.URL
 	MaxAllowedSize  int
-	NewUrlFormat    bool
+	NewURLFormat    bool
 }
 
 var imageSourceMap = make(map[ImageSourceType]ImageSource)
@@ -39,7 +39,7 @@ func LoadSources(o ServerOptions) {
 			Authorization:   o.Authorization,
 			AllowedOrigings: o.AllowedOrigins,
 			MaxAllowedSize:  o.MaxAllowedSize,
-			NewUrlFormat:    o.NewUrlFormat,
+			NewURLFormat:    o.NewURLFormat,
 		})
 	}
 }
@@ -54,5 +54,5 @@ func MatchSource(req *http.Request) ImageSource {
 }
 
 func GetHttpSource() *HttpImageSource {
-    return imageSourceMap[ImageSourceTypeHttp].(*HttpImageSource)
+	return imageSourceMap[ImageSourceTypeHttp].(*HttpImageSource)
 }

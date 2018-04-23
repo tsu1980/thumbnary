@@ -71,7 +71,7 @@ var allowedParams = map[string]string{
 }
 
 func readParams(url *url.URL, o ServerOptions) ImageOptions {
-    if o.NewUrlFormat {
+    if o.NewURLFormat {
         r := regexp.MustCompile("/c!/([^/]+)/(.+)")
         values := r.FindStringSubmatch(url.EscapedPath())
         if values == nil {

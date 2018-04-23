@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-    "strings"
-    "regexp"
-	"path"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
+	"regexp"
 	"strconv"
+	"strings"
 )
 
 const ImageSourceTypeHttp ImageSourceType = "http"
@@ -22,9 +22,9 @@ func NewHttpImageSource(config *SourceConfig) ImageSource {
 }
 
 func (s *HttpImageSource) Matches(r *http.Request) bool {
-    if s.Config.NewUrlFormat {
-    	return r.Method == "GET" && strings.Index(r.URL.Path, "/c!/") != -1
-    }
+	if s.Config.NewURLFormat {
+		return r.Method == "GET" && strings.Index(r.URL.Path, "/c!/") != -1
+	}
 	return r.Method == "GET" && r.URL.Query().Get("url") != ""
 }
 
@@ -91,29 +91,29 @@ func (s *HttpImageSource) setAuthorizationHeader(req *http.Request, ireq *http.R
 }
 
 func (s *HttpImageSource) parseURL(request *http.Request, origin *Origin) (*url.URL, error) {
-    if s.Config.NewUrlFormat {
-        r := regexp.MustCompile("/c!/([^/]+)/(.+)")
-        values := r.FindStringSubmatch(request.URL.EscapedPath())
-        if values == nil {
-    		return nil, fmt.Errorf("Bad URL format: %s", request.URL.EscapedPath())
-        }
-        
-        var relativePath = values[2];
+	if s.Config.NewURLFormat {
+		r := regexp.MustCompile("/c!/([^/]+)/(.+)")
+		values := r.FindStringSubmatch(request.URL.EscapedPath())
+		if values == nil {
+			return nil, fmt.Errorf("Bad URL format: %s", request.URL.EscapedPath())
+		}
 
-        u := &url.URL{
-    		Scheme:   origin.Scheme,
-    		Host:     origin.Host,
-    		Path:     path.Join(origin.PathPrefix, relativePath),
-    	}
-    	return url.Parse(u.String())
-    }
+		var relativePath = values[2]
+
+		u := &url.URL{
+			Scheme: origin.Scheme,
+			Host:   origin.Host,
+			Path:   path.Join(origin.PathPrefix, relativePath),
+		}
+		return url.Parse(u.String())
+	}
 
 	queryUrl := request.URL.Query().Get("url")
 	u, err := url.Parse(queryUrl)
-    if err != nil {
-        return nil, ErrInvalidImageURL
-    }
-    return u, nil
+	if err != nil {
+		return nil, ErrInvalidImageURL
+	}
+	return u, nil
 }
 
 func newHTTPRequest(s *HttpImageSource, ireq *http.Request, method string, url *url.URL) *http.Request {
