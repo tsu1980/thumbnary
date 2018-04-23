@@ -38,7 +38,6 @@ var (
 	aAllowedOrigins     = flag.String("allowed-origins", "", "Restrict remote image source processing to certain origins (separated by commas)")
 	aMaxAllowedSize     = flag.Int("max-allowed-size", 0, "Restrict maximum size of http image source (in bytes)")
 	aKey                = flag.String("key", "", "Define API key for authorization")
-	aMount              = flag.String("mount", "", "Mount server local directory")
 	aCertFile           = flag.String("certfile", "", "TLS certificate file path")
 	aKeyFile            = flag.String("keyfile", "", "TLS private key file path")
 	aAuthorization      = flag.String("authorization", "", "Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization")
@@ -76,11 +75,9 @@ Options:
   -p <port>                 Bind port [default: 8088]
   -h, -help                 Show help
   -v, -version              Show version
-  -path-prefix <value>      Url path prefix to listen to [default: "/"]
   -cors                     Enable CORS support [default: false]
   -disable-endpoints        Comma separated endpoints to disable. E.g: form,crop,rotate,health [default: ""]
   -key <key>                Define API key for authorization
-  -mount <path>             Mount server local directory
   -http-cache-ttl <num>     The TTL in seconds. Adds caching headers to locally served files.
   -http-read-timeout <num>  HTTP read timeout in seconds [default: 30]
   -http-write-timeout <num> HTTP write timeout in seconds [default: 30]
@@ -145,7 +142,6 @@ func main() {
 		APIKey:             *aKey,
 		Concurrency:        *aConcurrency,
 		Burst:              *aBurst,
-		Mount:              *aMount,
 		CertFile:           *aCertFile,
 		KeyFile:            *aKeyFile,
 		Placeholder:        *aPlaceholder,
@@ -160,11 +156,6 @@ func main() {
 	// Create a memory release goroutine
 	if *aMRelease > 0 {
 		memoryRelease(*aMRelease)
-	}
-
-	// Check if the mount directory exists, if present
-	if *aMount != "" {
-		checkMountDirectory(*aMount)
 	}
 
 	// Validate HTTP cache param, if present
@@ -262,19 +253,6 @@ func showUsage() {
 func showVersion() {
 	fmt.Println(Version)
 	os.Exit(1)
-}
-
-func checkMountDirectory(path string) {
-	src, err := os.Stat(path)
-	if err != nil {
-		exitWithError("error while mounting directory: %s", err)
-	}
-	if src.IsDir() == false {
-		exitWithError("mount path is not a directory: %s", path)
-	}
-	if path == "/" {
-		exitWithError("cannot mount root directory for security reasons")
-	}
 }
 
 func checkHttpCacheTtl(ttl int) {

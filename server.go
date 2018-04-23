@@ -31,7 +31,6 @@ type ServerOptions struct {
 	URLSignatureSalt   string
 	Address            string
 	APIKey             string
-	Mount              string
 	CertFile           string
 	KeyFile            string
 	Authorization      string
