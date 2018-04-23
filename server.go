@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -35,7 +34,6 @@ type ServerOptions struct {
 	Authorization      string
 	Placeholder        string
 	PlaceholderImage   []byte
-	AllowedOrigins     []*url.URL
 }
 
 func Server(o ServerOptions) error {

@@ -35,7 +35,6 @@ var (
 	aDBDataSourceName   = flag.String("db-data-source-name", "", "The database data source name")
 	aURLSignatureKey    = flag.String("url-signature-key", "", "The URL signature key (32 characters minimum)")
 	aURLSignatureSalt   = flag.String("url-signature-salt", "", "The URL signature salt (32 characters minimum)")
-	aAllowedOrigins     = flag.String("allowed-origins", "", "Restrict remote image source processing to certain origins (separated by commas)")
 	aMaxAllowedSize     = flag.Int("max-allowed-size", 0, "Restrict maximum size of http image source (in bytes)")
 	aKey                = flag.String("key", "", "Define API key for authorization")
 	aCertFile           = flag.String("certfile", "", "TLS certificate file path")
@@ -56,7 +55,6 @@ Usage:
   thumbnary -p 80
   thumbnary -cors
   thumbnary -concurrency 10
-  thumbnary -allowed-origins http://localhost,http://server.com
   thumbnary -enable-auth-forwarding
   thumbnary -authorization "Basic AwDJdL2DbwrD=="
   thumbnary -enable-placeholder
@@ -80,7 +78,6 @@ Options:
   -enable-url-signature     Enable URL signature (URL-safe Base64-encoded HMAC digest) [default: false]
   -url-signature-key        The URL signature key (32 characters minimum)
   -url-signature-salt       The URL signature salt (32 characters minimum)
-  -allowed-origins <urls>   Restrict remote image source processing to certain origins (separated by commas)
   -max-allowed-size <bytes> Restrict maximum size of http image source (in bytes)
   -certfile <path>          TLS certificate file path
   -keyfile <path>           TLS private key file path
@@ -137,7 +134,6 @@ func main() {
 		HTTPReadTimeout:    *aReadTimeout,
 		HTTPWriteTimeout:   *aWriteTimeout,
 		Authorization:      *aAuthorization,
-		AllowedOrigins:     parseOrigins(*aAllowedOrigins),
 		MaxAllowedSize:     *aMaxAllowedSize,
 	}
 

@@ -2,18 +2,16 @@ package main
 
 import (
 	"net/http"
-	"net/url"
 )
 
 type ImageSourceType string
 type ImageSourceFactoryFunction func(*SourceConfig) ImageSource
 
 type SourceConfig struct {
-	AuthForwarding  bool
-	Authorization   string
-	Type            ImageSourceType
-	AllowedOrigings []*url.URL
-	MaxAllowedSize  int
+	AuthForwarding bool
+	Authorization  string
+	Type           ImageSourceType
+	MaxAllowedSize int
 }
 
 var imageSourceMap = make(map[ImageSourceType]ImageSource)
@@ -31,11 +29,10 @@ func RegisterSource(sourceType ImageSourceType, factory ImageSourceFactoryFuncti
 func LoadSources(o ServerOptions) {
 	for name, factory := range imageSourceFactoryMap {
 		imageSourceMap[name] = factory(&SourceConfig{
-			Type:            name,
-			AuthForwarding:  o.AuthForwarding,
-			Authorization:   o.Authorization,
-			AllowedOrigings: o.AllowedOrigins,
-			MaxAllowedSize:  o.MaxAllowedSize,
+			Type:           name,
+			AuthForwarding: o.AuthForwarding,
+			Authorization:  o.Authorization,
+			MaxAllowedSize: o.MaxAllowedSize,
 		})
 	}
 }
