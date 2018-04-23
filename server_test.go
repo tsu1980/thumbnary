@@ -264,7 +264,7 @@ func TestFit(t *testing.T) {
 }
 
 func TestRemoteHTTPSource(t *testing.T) {
-	opts := ServerOptions{EnableURLSource: true}
+	opts := ServerOptions{}
 	fn := ImageMiddleware(opts)(Crop)
 	LoadSources(opts)
 
@@ -305,7 +305,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 }
 
 func TestInvalidRemoteHTTPSource(t *testing.T) {
-	opts := ServerOptions{EnableURLSource: true}
+	opts := ServerOptions{}
 	fn := ImageMiddleware(opts)(Crop)
 	LoadSources(opts)
 

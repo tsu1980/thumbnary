@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -20,7 +19,6 @@ type ServerOptions struct {
 	MaxAllowedSize     int
 	CORS               bool
 	AuthForwarding     bool
-	EnableURLSource    bool
 	EnablePlaceholder  bool
 	EnableURLSignature bool
 	NewURLFormat       bool
@@ -33,7 +31,6 @@ type ServerOptions struct {
 	URLSignatureKey    string
 	URLSignatureSalt   string
 	Address            string
-	PathPrefix         string
 	APIKey             string
 	Mount              string
 	CertFile           string
@@ -80,10 +77,6 @@ func listenAndServe(s *http.Server, o ServerOptions) error {
 		return s.ListenAndServeTLS(o.CertFile, o.KeyFile)
 	}
 	return s.ListenAndServe()
-}
-
-func join(o ServerOptions, route string) string {
-	return path.Join(o.PathPrefix, route)
 }
 
 type MyHttpHandler struct {

@@ -25,7 +25,6 @@ var (
 	aHelpl              = flag.Bool("help", false, "Show help")
 	aCors               = flag.Bool("cors", false, "Enable CORS support")
 	aAuthForwarding     = flag.Bool("enable-auth-forwarding", false, "Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors")
-	aEnableURLSource    = flag.Bool("enable-url-source", false, "Enable remote HTTP URL image source processing")
 	aEnablePlaceholder  = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error")
 	aEnableURLSignature = flag.Bool("enable-url-signature", false, "Enable URL signature (URL-safe Base64-encoded HMAC digest)")
 	aNewURLFormat       = flag.Bool("new-url-format", false, "Enable new url format")
@@ -134,7 +133,6 @@ func main() {
 		Address:            *aAddr,
 		CORS:               *aCors,
 		AuthForwarding:     *aAuthForwarding,
-		EnableURLSource:    *aEnableURLSource,
 		EnablePlaceholder:  *aEnablePlaceholder,
 		EnableURLSignature: *aEnableURLSignature,
 		NewURLFormat:       *aNewURLFormat,
