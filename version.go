@@ -7,7 +7,7 @@ const Version = "1.0.15"
 
 // Version represents the supported version
 type Versions struct {
-	ImaginaryVersion string `json:"imaginary"`
+	ThumbnaryVersion string `json:"thumbnary"`
 	BimgVersion      string `json:"bimg"`
 	VipsVersion      string `json:"libvips"`
 }

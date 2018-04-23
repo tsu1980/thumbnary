@@ -131,7 +131,7 @@ func authorizeClient(next http.Handler, o ServerOptions) http.Handler {
 
 func defaultHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Server", fmt.Sprintf("imaginary %s (bimg %s)", Version, bimg.Version))
+		w.Header().Set("Server", fmt.Sprintf("thumbnary %s (bimg %s)", Version, bimg.Version))
 		next.ServeHTTP(w, r)
 	})
 }

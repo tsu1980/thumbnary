@@ -7,7 +7,7 @@ import (
 
 func TestImageResize(t *testing.T) {
 	opts := ImageOptions{Width: 300, Height: 300}
-	buf, _ := ioutil.ReadAll(readFile("imaginary.jpg"))
+	buf, _ := ioutil.ReadAll(readFile("thumbnary.jpg"))
 
 	img, err := Resize(buf, opts)
 	if err != nil {
@@ -23,7 +23,7 @@ func TestImageResize(t *testing.T) {
 
 func TestImageFit(t *testing.T) {
 	opts := ImageOptions{Width: 300, Height: 300}
-	buf, _ := ioutil.ReadAll(readFile("imaginary.jpg"))
+	buf, _ := ioutil.ReadAll(readFile("thumbnary.jpg"))
 
 	img, err := Fit(buf, opts)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestImagePipelineOperations(t *testing.T) {
 	}
 
 	opts := ImageOptions{Operations: operations}
-	buf, _ := ioutil.ReadAll(readFile("imaginary.jpg"))
+	buf, _ := ioutil.ReadAll(readFile("thumbnary.jpg"))
 
 	img, err := Pipeline(buf, opts)
 	if err != nil {

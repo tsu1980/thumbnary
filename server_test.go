@@ -32,7 +32,7 @@ func TestIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if strings.Contains(string(body), "imaginary") == false {
+	if strings.Contains(string(body), "thumbnary") == false {
 		t.Fatalf("Invalid body response: %s", body)
 	}
 }

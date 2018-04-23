@@ -57,23 +57,23 @@ var (
 	aCpus               = flag.Int("cpus", runtime.GOMAXPROCS(-1), "Number of cpu cores to use")
 )
 
-const usage = `imaginary %s
+const usage = `thumbnary %s
 
 Usage:
-  imaginary -p 80
-  imaginary -cors
-  imaginary -concurrency 10
-  imaginary -path-prefix /api/v1
-  imaginary -enable-url-source
-  imaginary -disable-endpoints form,health,crop,rotate
-  imaginary -enable-url-source -allowed-origins http://localhost,http://server.com
-  imaginary -enable-url-source -enable-auth-forwarding
-  imaginary -enable-url-source -authorization "Basic AwDJdL2DbwrD=="
-  imaginary -enable-placeholder
-  imaginary -enable-url-source -placeholder ./placeholder.jpg
-  imaginary -enable-url-signature -url-signature-key 4f46feebafc4b5e988f131c4ff8b5997 -url-signature-salt 88f131c4ff8b59974f46feebafc4b5e9
-  imaginary -h | -help
-  imaginary -v | -version
+  thumbnary -p 80
+  thumbnary -cors
+  thumbnary -concurrency 10
+  thumbnary -path-prefix /api/v1
+  thumbnary -enable-url-source
+  thumbnary -disable-endpoints form,health,crop,rotate
+  thumbnary -enable-url-source -allowed-origins http://localhost,http://server.com
+  thumbnary -enable-url-source -enable-auth-forwarding
+  thumbnary -enable-url-source -authorization "Basic AwDJdL2DbwrD=="
+  thumbnary -enable-placeholder
+  thumbnary -enable-url-source -placeholder ./placeholder.jpg
+  thumbnary -enable-url-signature -url-signature-key 4f46feebafc4b5e988f131c4ff8b5997 -url-signature-salt 88f131c4ff8b59974f46feebafc4b5e9
+  thumbnary -h | -help
+  thumbnary -v | -version
 
 Options:
   -a <addr>                 Bind address [default: *]
@@ -223,7 +223,7 @@ func main() {
 		}
 	}
 
-	debug("imaginary server listening on port :%d/%s", opts.Port, strings.TrimPrefix(opts.PathPrefix, "/"))
+	debug("thumbnary server listening on port :%d/%s", opts.Port, strings.TrimPrefix(opts.PathPrefix, "/"))
 
 	// Load image source providers
 	LoadSources(opts)
@@ -343,7 +343,7 @@ func exitWithError(format string, args ...interface{}) {
 
 func debug(msg string, values ...interface{}) {
 	debug := os.Getenv("DEBUG")
-	if debug == "imaginary" || debug == "*" {
+	if debug == "thumbnary" || debug == "*" {
 		log.Printf(msg, values...)
 	}
 }
