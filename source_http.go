@@ -22,10 +22,7 @@ func NewHttpImageSource(config *SourceConfig) ImageSource {
 }
 
 func (s *HttpImageSource) Matches(r *http.Request) bool {
-	if s.Config.NewURLFormat {
-		return r.Method == "GET" && strings.Index(r.URL.Path, "/c!/") != -1
-	}
-	return r.Method == "GET" && r.URL.Query().Get("url") != ""
+	return r.Method == "GET" && strings.Index(r.URL.Path, "/c!/") != -1
 }
 
 func (s *HttpImageSource) GetImage(req *http.Request, origin *Origin) ([]byte, error) {
@@ -91,29 +88,20 @@ func (s *HttpImageSource) setAuthorizationHeader(req *http.Request, ireq *http.R
 }
 
 func (s *HttpImageSource) parseURL(request *http.Request, origin *Origin) (*url.URL, error) {
-	if s.Config.NewURLFormat {
-		r := regexp.MustCompile("/c!/([^/]+)/(.+)")
-		values := r.FindStringSubmatch(request.URL.EscapedPath())
-		if values == nil {
-			return nil, fmt.Errorf("Bad URL format: %s", request.URL.EscapedPath())
-		}
-
-		var relativePath = values[2]
-
-		u := &url.URL{
-			Scheme: origin.Scheme,
-			Host:   origin.Host,
-			Path:   path.Join(origin.PathPrefix, relativePath),
-		}
-		return url.Parse(u.String())
+	r := regexp.MustCompile("/c!/([^/]+)/(.+)")
+	values := r.FindStringSubmatch(request.URL.EscapedPath())
+	if values == nil {
+		return nil, fmt.Errorf("Bad URL format: %s", request.URL.EscapedPath())
 	}
 
-	queryUrl := request.URL.Query().Get("url")
-	u, err := url.Parse(queryUrl)
-	if err != nil {
-		return nil, ErrInvalidImageURL
+	var relativePath = values[2]
+
+	u := &url.URL{
+		Scheme: origin.Scheme,
+		Host:   origin.Host,
+		Path:   path.Join(origin.PathPrefix, relativePath),
 	}
-	return u, nil
+	return url.Parse(u.String())
 }
 
 func newHTTPRequest(s *HttpImageSource, ireq *http.Request, method string, url *url.URL) *http.Request {

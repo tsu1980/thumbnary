@@ -21,7 +21,6 @@ type ServerOptions struct {
 	AuthForwarding     bool
 	EnablePlaceholder  bool
 	EnableURLSignature bool
-	NewURLFormat       bool
 	EnableOrigin       bool
 	OriginHostPattern  string
 	RedisURL           string

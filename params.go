@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"math"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
-    "regexp"
 
 	"gopkg.in/h2non/bimg.v1"
 )
@@ -48,72 +48,60 @@ var allowedParams = map[string]string{
 	"minampl":     "float",
 	"operations":  "json",
 
-    // for new url format
-	"w":      "int",
-	"h":      "int",
-	"u":      "bool",
-	"m":      "resizemode",
-//	"c":      "rectInt",
-//	"cr":     "rectFloat",
-	"g":      "gravity9",
-	"b":      "hexcolor",
+	// for new url format
+	"w": "int",
+	"h": "int",
+	"u": "bool",
+	"m": "resizemode",
+	//	"c":      "rectInt",
+	//	"cr":     "rectFloat",
+	"g": "gravity9",
+	"b": "hexcolor",
 
-	"l":      "string",
-	"lx":     "int",
-	"ly":     "int",
-	"lg":     "gravity9",
-	"lo":     "float",
+	"l":  "string",
+	"lx": "int",
+	"ly": "int",
+	"lg": "gravity9",
+	"lo": "float",
 
-	"mono":   "bool",
+	"mono": "bool",
 
-	"f":      "string",
-	"q":      "int",
+	"f": "string",
+	"q": "int",
 }
 
 func readParams(url *url.URL, o ServerOptions) ImageOptions {
-    if o.NewURLFormat {
-        r := regexp.MustCompile("/c!/([^/]+)/(.+)")
-        values := r.FindStringSubmatch(url.EscapedPath())
-        if values == nil {
-        	params := make(map[string]interface{})
-        	for key, kind := range allowedParams {
-        		params[key] = parseParam("", kind)
-        	}
-        	return mapImageParams(params)
-        }
+	r := regexp.MustCompile("/c!/([^/]+)/(.+)")
+	values := r.FindStringSubmatch(url.EscapedPath())
+	if values == nil {
+		params := make(map[string]interface{})
+		for key, kind := range allowedParams {
+			params[key] = parseParam("", kind)
+		}
+		return mapImageParams(params)
+	}
 
-        inputParamsStr := values[1];
-        r = regexp.MustCompile(`([^,=]+)=([^,=]+)`)
-        paramsList := r.FindAllStringSubmatch(inputParamsStr, -1)
-        paramsMap := make(map[string]string)
-        for i := 0; i < len(paramsList); i++ {
-            paramsMap[paramsList[i][1]] = paramsList[i][2]
-        }
+	inputParamsStr := values[1]
+	r = regexp.MustCompile(`([^,=]+)=([^,=]+)`)
+	paramsList := r.FindAllStringSubmatch(inputParamsStr, -1)
+	paramsMap := make(map[string]string)
+	for i := 0; i < len(paramsList); i++ {
+		paramsMap[paramsList[i][1]] = paramsList[i][2]
+	}
 
-    	params := make(map[string]interface{})
+	params := make(map[string]interface{})
 
-    	for key, kind := range allowedParams {
-    		param := paramsMap[key]
-    		params[key] = parseParam(param, kind)
-    	}
+	for key, kind := range allowedParams {
+		param := paramsMap[key]
+		params[key] = parseParam(param, kind)
+	}
 
-    	opts := mapImageParams(params)
-        opts.Type = opts.NewFileType
-        if opts.NewMonochrome {
-            opts.Colorspace = bimg.InterpretationBW
-        }
-        return opts;
-    } else {
-        query := url.Query()
-    	params := make(map[string]interface{})
-
-    	for key, kind := range allowedParams {
-    		param := query.Get(key)
-    		params[key] = parseParam(param, kind)
-    	}
-
-    	return mapImageParams(params)
-    }
+	opts := mapImageParams(params)
+	opts.Type = opts.NewFileType
+	if opts.NewMonochrome {
+		opts.Colorspace = bimg.InterpretationBW
+	}
+	return opts
 }
 
 func readMapParams(options map[string]interface{}) ImageOptions {
@@ -226,20 +214,20 @@ func mapImageParams(params map[string]interface{}) ImageOptions {
 		MinAmpl:       params["minampl"].(float64),
 		Operations:    params["operations"].(PipelineOperations),
 
-		NewWidth:      params["w"].(int),
-		NewHeight:     params["h"].(int),
-		NewUpscale:    params["u"].(bool),
-		NewResizeMode: params["m"].(ResizeMode),
-		NewGravity:    params["g"].(Gravity9),
-		NewBackground: params["b"].([]uint8),
-		NewOverlayURL: params["l"].(string),
-		NewOverlayX:   params["lx"].(int),
-		NewOverlayY:   params["ly"].(int),
+		NewWidth:          params["w"].(int),
+		NewHeight:         params["h"].(int),
+		NewUpscale:        params["u"].(bool),
+		NewResizeMode:     params["m"].(ResizeMode),
+		NewGravity:        params["g"].(Gravity9),
+		NewBackground:     params["b"].([]uint8),
+		NewOverlayURL:     params["l"].(string),
+		NewOverlayX:       params["lx"].(int),
+		NewOverlayY:       params["ly"].(int),
 		NewOverlayGravity: params["lg"].(Gravity9),
 		NewOverlayOpacity: float32(params["lo"].(float64)),
-		NewMonochrome: params["mono"].(bool),
-		NewFileType:   params["f"].(string),
-		NewQuality:    params["q"].(int),
+		NewMonochrome:     params["mono"].(bool),
+		NewFileType:       params["f"].(string),
+		NewQuality:        params["q"].(int),
 	}
 }
 
@@ -277,7 +265,7 @@ func parseColor(val string) []uint8 {
 }
 
 func parseHexColor(val string) []uint8 {
-    var r, g, b uint8
+	var r, g, b uint8
 
 	if len(val) == 3 {
 		fmt.Sscanf(val, "%1x%1x%1x", &r, &g, &b)
@@ -287,25 +275,25 @@ func parseHexColor(val string) []uint8 {
 	} else {
 		fmt.Sscanf(val, "%02x%02x%02x", &r, &g, &b)
 	}
-    return []uint8{r,g,b}
+	return []uint8{r, g, b}
 }
 
 func parseRectInt(val string) []int {
-    var x1, y1, x2, y2 int
+	var x1, y1, x2, y2 int
 
 	if n, _ := fmt.Sscanf(val, "%d,%d,%d,%d", &x1, &y1, &x2, &y2); n == 4 {
-        return []int{x1, y1, x2, y2}
-    }
-    return []int{x1, y1, x2, y2}
+		return []int{x1, y1, x2, y2}
+	}
+	return []int{x1, y1, x2, y2}
 }
 
 func parseRectFloat(val string) []float32 {
-    var x1, y1, x2, y2 float32
+	var x1, y1, x2, y2 float32
 
 	if n, _ := fmt.Sscanf(val, "%f,%f,%f,%f", &x1, &y1, &x2, &y2); n == 4 {
-        return []float32{x1, y1, x2, y2}
-    }
-    return []float32{x1, y1, x2, y2}
+		return []float32{x1, y1, x2, y2}
+	}
+	return []float32{x1, y1, x2, y2}
 }
 
 func parseJSONOperations(data string) PipelineOperations {
@@ -350,15 +338,15 @@ func parseGravity(val string) bimg.Gravity {
 
 func parseGravity9(val string) Gravity9 {
 	var m = map[string]Gravity9{
-		"1": Gravity9TopLeft,
-		"2": Gravity9TopCenter,
-		"3": Gravity9TopRight,
-		"4": Gravity9MiddleLeft,
-		"5": Gravity9MiddleCenter,
-		"6": Gravity9MiddleRight,
-		"7": Gravity9BottomLeft,
-		"8": Gravity9BottomCenter,
-		"9": Gravity9BottomRight,
+		"1":     Gravity9TopLeft,
+		"2":     Gravity9TopCenter,
+		"3":     Gravity9TopRight,
+		"4":     Gravity9MiddleLeft,
+		"5":     Gravity9MiddleCenter,
+		"6":     Gravity9MiddleRight,
+		"7":     Gravity9BottomLeft,
+		"8":     Gravity9BottomCenter,
+		"9":     Gravity9BottomRight,
 		"smart": Gravity9Smart,
 	}
 
@@ -373,9 +361,9 @@ func parseGravity9(val string) Gravity9 {
 func parseResizeMode(val string) ResizeMode {
 	var m = map[string]ResizeMode{
 		"scale": ResizeModeScale,
-		"crop": ResizeModeCrop,
-		"fit": ResizeModeFit,
-		"pad": ResizeModePad,
+		"crop":  ResizeModeCrop,
+		"fit":   ResizeModeFit,
+		"pad":   ResizeModePad,
 	}
 
 	val = strings.TrimSpace(strings.ToLower(val))

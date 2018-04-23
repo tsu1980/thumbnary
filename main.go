@@ -27,7 +27,6 @@ var (
 	aAuthForwarding     = flag.Bool("enable-auth-forwarding", false, "Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors")
 	aEnablePlaceholder  = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error")
 	aEnableURLSignature = flag.Bool("enable-url-signature", false, "Enable URL signature (URL-safe Base64-encoded HMAC digest)")
-	aNewURLFormat       = flag.Bool("new-url-format", false, "Enable new url format")
 	aEnableOrigin       = flag.Bool("enable-origin", false, "Enable Origin future(with http source only)")
 	aOriginHostPattern  = flag.String("origin-host-pattern", ".*", "The regex pattern string for extract origin id from host name")
 	aRedisURL           = flag.String("redis-url", "", "The redis server url")
@@ -135,7 +134,6 @@ func main() {
 		AuthForwarding:     *aAuthForwarding,
 		EnablePlaceholder:  *aEnablePlaceholder,
 		EnableURLSignature: *aEnableURLSignature,
-		NewURLFormat:       *aNewURLFormat,
 		EnableOrigin:       *aEnableOrigin,
 		OriginHostPattern:  *aOriginHostPattern,
 		RedisURL:           *aRedisURL,
