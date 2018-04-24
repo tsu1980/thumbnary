@@ -8,36 +8,39 @@ import (
 )
 
 type ServerOptions struct {
-	Port               int
-	Burst              int
-	Concurrency        int
-	HTTPCacheTTL       int
-	HTTPReadTimeout    int
-	HTTPWriteTimeout   int
-	MaxAllowedSize     int
-	CORS               bool
-	AuthForwarding     bool
-	EnablePlaceholder  bool
-	EnableURLSignature bool
-	EnableOrigin       bool
-	OriginHostPattern  string
-	RedisURL           string
-	RedisChannelPrefix string
-	DBDriverName       string
-	DBDataSourceName   string
-	URLSignatureKey    string
-	URLSignatureSalt   string
-	Address            string
-	APIKey             string
-	CertFile           string
-	KeyFile            string
-	Authorization      string
-	Placeholder        string
-	PlaceholderImage   []byte
+	Port                      int
+	Burst                     int
+	Concurrency               int
+	HTTPCacheTTL              int
+	HTTPReadTimeout           int
+	HTTPWriteTimeout          int
+	MaxAllowedSize            int
+	CORS                      bool
+	AuthForwarding            bool
+	EnablePlaceholder         bool
+	EnableURLSignature        bool
+	EnableOrigin              bool
+	OriginIdDetectMethods     []OriginIdDetectMethod
+	OriginIdDetectHostPattern string
+	OriginIdDetectPathPattern string
+	RedisURL                  string
+	RedisChannelPrefix        string
+	DBDriverName              string
+	DBDataSourceName          string
+	URLSignatureKey           string
+	URLSignatureSalt          string
+	Address                   string
+	APIKey                    string
+	CertFile                  string
+	KeyFile                   string
+	Authorization             string
+	Placeholder               string
+	PlaceholderImage          []byte
 }
 
 type ServerContext struct {
 	Options     ServerOptions
+	OriginId    OriginId
 	OriginRepos OriginRepository
 }
 
