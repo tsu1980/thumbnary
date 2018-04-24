@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/golang-lru"
 )
 
+const OriginRepositoryTypeMySQL OriginRepositoryType = "mysql"
+
 type MySQLOriginRepository struct {
 	Options ServerOptions
 }

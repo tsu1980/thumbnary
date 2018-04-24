@@ -5,8 +5,6 @@ import (
 	"net"
 	"net/http"
 	"regexp"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 type OriginRepositoryType string
@@ -31,7 +29,7 @@ type OriginRepository interface {
 
 func NewOriginRepository(ort OriginRepositoryType, o ServerOptions) (OriginRepository, error) {
 	switch ort {
-	case "mysql":
+	case OriginRepositoryTypeMySQL:
 		return &MySQLOriginRepository{Options: o}, nil
 	default:
 		return nil, fmt.Errorf("Unknown repository type: (type=%s)", ort)

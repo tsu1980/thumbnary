@@ -196,7 +196,7 @@ func main() {
 	LoadSources(opts)
 
 	// Create and open origin repository
-	sctx.OriginRepos, err = NewOriginRepository("mysql", opts)
+	sctx.OriginRepos, err = NewOriginRepository(OriginRepositoryTypeMySQL, opts)
 	if err != nil {
 		exitWithError("failed to create origin repository: %s", err.Error())
 	}
