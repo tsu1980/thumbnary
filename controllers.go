@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	//"log"
 	"mime"
-	"net/url"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -34,21 +35,17 @@ func healthController(w http.ResponseWriter, r *http.Request) {
 
 func imageController(o ServerOptions, operation Operation) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		var imageSource = MatchSource(req)
+		origin, err := FindOrigin(o, req)
+		if err != nil {
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
+			return
+		}
+
+		imageSource := imageSourceMap[origin.SourceType]
 		if imageSource == nil {
 			ErrorReply(req, w, ErrMissingImageSource, o)
 			return
 		}
-
-        var origin = (*Origin)(nil)
-        var err = (error)(nil)
-        if _, ok := imageSource.(*HttpImageSource); ok {
-            origin, err = FindOrigin(o, req)
-    		if err != nil {
-    			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
-    			return
-    		}
-        }
 
 		buf, err := imageSource.GetImage(req, origin)
 		if err != nil {
@@ -105,8 +102,15 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, Operation 
 		return
 	}
 
-	opts := readParams(r.URL, o)
-    //log.Printf("readParams: %#v\n", opts)
+	var inputParamsStr = ""
+	r2 := regexp.MustCompile("/c!/([^/]+)/(.+)")
+	values := r2.FindStringSubmatch(r.URL.EscapedPath())
+	if values != nil {
+		inputParamsStr = values[1]
+	}
+
+	opts := readParams(inputParamsStr)
+	//log.Printf("readParams: %#v\n", opts)
 	vary := ""
 	if opts.Type == "auto" {
 		opts.Type = determineAcceptMimeType(r.Header.Get("Accept"))
@@ -116,28 +120,28 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, Operation 
 		return
 	}
 
-    // Fetch overlay image if necessary
-    if opts.NewOverlayURL != "" {
-        var overlaySource = GetHttpSource()
-        urlUnescaped, err := url.PathUnescape(opts.NewOverlayURL)
+	// Fetch overlay image if necessary
+	if opts.NewOverlayURL != "" {
+		var overlaySource = GetHttpSource()
+		urlUnescaped, err := url.PathUnescape(opts.NewOverlayURL)
 		if err != nil {
 			ErrorReply(r, w, NewError(err.Error(), BadRequest), o)
 			return
 		}
-        url, err := url.Parse(urlUnescaped)
+		url, err := url.Parse(urlUnescaped)
 		if err != nil {
 			ErrorReply(r, w, NewError(err.Error(), BadRequest), o)
 			return
 		}
 
-        //log.Printf("fetchImage overlay image: %#v", url.String())
+		//log.Printf("fetchImage overlay image: %#v", url.String())
 		overlayBuf, err := overlaySource.fetchImage(url, r)
 		if err != nil {
 			ErrorReply(r, w, NewError(err.Error(), BadRequest), o)
 			return
 		}
-        opts.NewOverlayBuf = overlayBuf
-    }
+		opts.NewOverlayBuf = overlayBuf
+	}
 
 	image, err := Operation.Run(buf, opts)
 	if err != nil {

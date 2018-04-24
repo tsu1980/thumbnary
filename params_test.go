@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/url"
 	"testing"
 
 	"gopkg.in/h2non/bimg.v1"
@@ -10,24 +9,17 @@ import (
 const fixture = "fixtures/large.jpg"
 
 func TestReadParams(t *testing.T) {
-	q := url.Values{}
-	q.Set("width", "100")
-	q.Add("height", "80")
-	q.Add("noreplicate", "1")
-	q.Add("opacity", "0.2")
-	q.Add("text", "hello")
-	q.Add("background", "255,10,20")
+	str := "w=100,h=80,noreplicate=1,opacity=0.2,text=hello,b=ff0a14"
+	params := readParams(str)
 
-	params := readParams(q)
-
-	assert := params.Width == 100 &&
-		params.Height == 80 &&
+	assert := params.NewWidth == 100 &&
+		params.NewHeight == 80 &&
 		params.NoReplicate == true &&
 		params.Opacity == 0.2 &&
 		params.Text == "hello" &&
-		params.Background[0] == 255 &&
-		params.Background[1] == 10 &&
-		params.Background[2] == 20
+		params.NewBackground[0] == 255 &&
+		params.NewBackground[1] == 10 &&
+		params.NewBackground[2] == 20
 
 	if assert == false {
 		t.Error("Invalid params")
@@ -159,7 +151,8 @@ func TestGravity(t *testing.T) {
 	}
 
 	for _, td := range cases {
-		io := readParams(url.Values{"gravity": []string{td.gravityValue}})
+		str := "gravity=" + td.gravityValue
+		io := readParams(str)
 		if (io.Gravity == bimg.GravitySmart) != td.smartCropValue {
 			t.Errorf("Expected %t to be %t, test data: %+v", io.Gravity == bimg.GravitySmart, td.smartCropValue, td)
 		}

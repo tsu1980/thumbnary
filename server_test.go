@@ -3,340 +3,356 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"path"
-	"strings"
-	"testing"
 
-	"gopkg.in/h2non/bimg.v1"
+	bimg "gopkg.in/h2non/bimg.v1"
 )
 
-func TestIndex(t *testing.T) {
-	ts := testServer(indexController)
-	defer ts.Close()
+// import (
+// 	"fmt"
+// 	"io"
+// 	"io/ioutil"
+// 	"net/http"
+// 	"net/http/httptest"
+// 	"os"
+// 	"path"
+// 	"strings"
+// 	"testing"
 
-	res, err := http.Get(ts.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	"gopkg.in/h2non/bimg.v1"
+// )
 
-	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
-	}
+// func TestIndex(t *testing.T) {
+// 	ts := testServer(indexController)
+// 	defer ts.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
+// 	res, err := http.Get(ts.URL)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	if strings.Contains(string(body), "thumbnary") == false {
-		t.Fatalf("Invalid body response: %s", body)
-	}
-}
+// 	if res.StatusCode != 200 {
+// 		t.Fatalf("Invalid response status: %s", res.Status)
+// 	}
 
-func TestCrop(t *testing.T) {
-	ts := testServer(controller(Crop))
-	buf := readFile("large.jpg")
-	url := ts.URL + "?width=300"
-	defer ts.Close()
+// 	body, err := ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	res, err := http.Post(url, "image/jpeg", buf)
-	if err != nil {
-		t.Fatal("Cannot perform the request")
-	}
+// 	if strings.Contains(string(body), "thumbnary") == false {
+// 		t.Fatalf("Invalid body response: %s", body)
+// 	}
+// }
 
-	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
-	}
+// func TestCrop(t *testing.T) {
+// 	ts := testServer(controller(Crop))
+// 	buf := readFile("large.jpg")
+// 	url := ts.URL + "/c!/w=300"
+// 	defer ts.Close()
 
-	if res.Header.Get("Content-Length") == "" {
-		t.Fatal("Empty content length response")
-	}
+// 	res, err := http.Post(url, "image/jpeg", buf)
+// 	if err != nil {
+// 		t.Fatal("Cannot perform the request")
+// 	}
 
-	image, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(image) == 0 {
-		t.Fatalf("Empty response body")
-	}
+// 	if res.StatusCode != 200 {
+// 		t.Fatalf("Invalid response status: %s", res.Status)
+// 	}
 
-	err = assertSize(image, 300, 1080)
-	if err != nil {
-		t.Error(err)
-	}
+// 	if res.Header.Get("Content-Length") == "" {
+// 		t.Fatal("Empty content length response")
+// 	}
 
-	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
-	}
-}
+// 	image, err := ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if len(image) == 0 {
+// 		t.Fatalf("Empty response body")
+// 	}
 
-func TestResize(t *testing.T) {
-	ts := testServer(controller(Resize))
-	buf := readFile("large.jpg")
-	url := ts.URL + "?width=300"
-	defer ts.Close()
+// 	err = assertSize(image, 300, 1080)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	res, err := http.Post(url, "image/jpeg", buf)
-	if err != nil {
-		t.Fatal("Cannot perform the request")
-	}
+// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
+// 		t.Fatalf("Invalid image type")
+// 	}
+// }
 
-	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
-	}
+// func TestResize(t *testing.T) {
+// 	ts := testServer(controller(Resize))
+// 	buf := readFile("large.jpg")
+// 	url := ts.URL + "?width=300"
+// 	defer ts.Close()
 
-	image, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(image) == 0 {
-		t.Fatalf("Empty response body")
-	}
+// 	res, err := http.Post(url, "image/jpeg", buf)
+// 	if err != nil {
+// 		t.Fatal("Cannot perform the request")
+// 	}
 
-	err = assertSize(image, 300, 1080)
-	if err != nil {
-		t.Error(err)
-	}
+// 	if res.StatusCode != 200 {
+// 		t.Fatalf("Invalid response status: %s", res.Status)
+// 	}
 
-	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
-	}
-}
+// 	image, err := ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if len(image) == 0 {
+// 		t.Fatalf("Empty response body")
+// 	}
 
-func TestEnlarge(t *testing.T) {
-	ts := testServer(controller(Enlarge))
-	buf := readFile("large.jpg")
-	url := ts.URL + "?width=300&height=200"
-	defer ts.Close()
+// 	err = assertSize(image, 300, 1080)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	res, err := http.Post(url, "image/jpeg", buf)
-	if err != nil {
-		t.Fatal("Cannot perform the request")
-	}
+// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
+// 		t.Fatalf("Invalid image type")
+// 	}
+// }
 
-	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
-	}
+// func TestEnlarge(t *testing.T) {
+// 	ts := testServer(controller(Enlarge))
+// 	buf := readFile("large.jpg")
+// 	url := ts.URL + "?width=300&height=200"
+// 	defer ts.Close()
 
-	image, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(image) == 0 {
-		t.Fatalf("Empty response body")
-	}
+// 	res, err := http.Post(url, "image/jpeg", buf)
+// 	if err != nil {
+// 		t.Fatal("Cannot perform the request")
+// 	}
 
-	err = assertSize(image, 300, 200)
-	if err != nil {
-		t.Error(err)
-	}
+// 	if res.StatusCode != 200 {
+// 		t.Fatalf("Invalid response status: %s", res.Status)
+// 	}
 
-	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
-	}
-}
+// 	image, err := ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if len(image) == 0 {
+// 		t.Fatalf("Empty response body")
+// 	}
 
-func TestExtract(t *testing.T) {
-	ts := testServer(controller(Extract))
-	buf := readFile("large.jpg")
-	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120"
-	defer ts.Close()
+// 	err = assertSize(image, 300, 200)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	res, err := http.Post(url, "image/jpeg", buf)
-	if err != nil {
-		t.Fatal("Cannot perform the request")
-	}
+// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
+// 		t.Fatalf("Invalid image type")
+// 	}
+// }
 
-	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
-	}
+// func TestExtract(t *testing.T) {
+// 	ts := testServer(controller(Extract))
+// 	buf := readFile("large.jpg")
+// 	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120"
+// 	defer ts.Close()
 
-	image, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(image) == 0 {
-		t.Fatalf("Empty response body")
-	}
+// 	res, err := http.Post(url, "image/jpeg", buf)
+// 	if err != nil {
+// 		t.Fatal("Cannot perform the request")
+// 	}
 
-	err = assertSize(image, 200, 120)
-	if err != nil {
-		t.Error(err)
-	}
+// 	if res.StatusCode != 200 {
+// 		t.Fatalf("Invalid response status: %s", res.Status)
+// 	}
 
-	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
-	}
-}
+// 	image, err := ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if len(image) == 0 {
+// 		t.Fatalf("Empty response body")
+// 	}
 
-func TestTypeAuto(t *testing.T) {
-	cases := []struct {
-		acceptHeader string
-		expected     string
-	}{
-		{"", "jpeg"},
-		{"image/webp,*/*", "webp"},
-		{"image/png,*/*", "png"},
-		{"image/webp;q=0.8,image/jpeg", "webp"},
-		{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8", "webp"}, // Chrome
-	}
+// 	err = assertSize(image, 200, 120)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	for _, test := range cases {
-		ts := testServer(controller(Crop))
-		buf := readFile("large.jpg")
-		url := ts.URL + "?width=300&type=auto"
-		defer ts.Close()
+// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
+// 		t.Fatalf("Invalid image type")
+// 	}
+// }
 
-		req, _ := http.NewRequest("POST", url, buf)
-		req.Header.Add("Content-Type", "image/jpeg")
-		req.Header.Add("Accept", test.acceptHeader)
-		res, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatal("Cannot perform the request")
-		}
+// func TestTypeAuto(t *testing.T) {
+// 	cases := []struct {
+// 		acceptHeader string
+// 		expected     string
+// 	}{
+// 		{"", "jpeg"},
+// 		{"image/webp,*/*", "webp"},
+// 		{"image/png,*/*", "png"},
+// 		{"image/webp;q=0.8,image/jpeg", "webp"},
+// 		{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8", "webp"}, // Chrome
+// 	}
 
-		if res.StatusCode != 200 {
-			t.Fatalf("Invalid response status: %s", res.Status)
-		}
+// 	for _, test := range cases {
+// 		ts := testServer(controller(Crop))
+// 		buf := readFile("large.jpg")
+// 		url := ts.URL + "?width=300&type=auto"
+// 		defer ts.Close()
 
-		if res.Header.Get("Content-Length") == "" {
-			t.Fatal("Empty content length response")
-		}
+// 		req, _ := http.NewRequest("POST", url, buf)
+// 		req.Header.Add("Content-Type", "image/jpeg")
+// 		req.Header.Add("Accept", test.acceptHeader)
+// 		res, err := http.DefaultClient.Do(req)
+// 		if err != nil {
+// 			t.Fatal("Cannot perform the request")
+// 		}
 
-		image, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(image) == 0 {
-			t.Fatalf("Empty response body")
-		}
+// 		if res.StatusCode != 200 {
+// 			t.Fatalf("Invalid response status: %s", res.Status)
+// 		}
 
-		err = assertSize(image, 300, 1080)
-		if err != nil {
-			t.Error(err)
-		}
+// 		if res.Header.Get("Content-Length") == "" {
+// 			t.Fatal("Empty content length response")
+// 		}
 
-		if bimg.DetermineImageTypeName(image) != test.expected {
-			t.Fatalf("Invalid image type")
-		}
+// 		image, err := ioutil.ReadAll(res.Body)
+// 		if err != nil {
+// 			t.Fatal(err)
+// 		}
+// 		if len(image) == 0 {
+// 			t.Fatalf("Empty response body")
+// 		}
 
-		if res.Header.Get("Vary") != "Accept" {
-			t.Fatal("Vary header not set correctly")
-		}
-	}
-}
+// 		err = assertSize(image, 300, 1080)
+// 		if err != nil {
+// 			t.Error(err)
+// 		}
 
-func TestFit(t *testing.T) {
-	ts := testServer(controller(Fit))
-	buf := readFile("large.jpg")
-	url := ts.URL + "?width=300&height=300"
-	defer ts.Close()
+// 		if bimg.DetermineImageTypeName(image) != test.expected {
+// 			t.Fatalf("Invalid image type")
+// 		}
 
-	res, err := http.Post(url, "image/jpeg", buf)
-	if err != nil {
-		t.Fatal("Cannot perform the request")
-	}
+// 		if res.Header.Get("Vary") != "Accept" {
+// 			t.Fatal("Vary header not set correctly")
+// 		}
+// 	}
+// }
 
-	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %s", res.Status)
-	}
+// func TestFit(t *testing.T) {
+// 	ts := testServer(controller(Fit))
+// 	buf := readFile("large.jpg")
+// 	url := ts.URL + "?width=300&height=300"
+// 	defer ts.Close()
 
-	image, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(image) == 0 {
-		t.Fatalf("Empty response body")
-	}
+// 	res, err := http.Post(url, "image/jpeg", buf)
+// 	if err != nil {
+// 		t.Fatal("Cannot perform the request")
+// 	}
 
-	err = assertSize(image, 300, 168)
-	if err != nil {
-		t.Error(err)
-	}
+// 	if res.StatusCode != 200 {
+// 		t.Fatalf("Invalid response status: %s", res.Status)
+// 	}
 
-	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
-	}
-}
+// 	image, err := ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if len(image) == 0 {
+// 		t.Fatalf("Empty response body")
+// 	}
 
-func TestRemoteHTTPSource(t *testing.T) {
-	opts := ServerOptions{}
-	fn := ImageMiddleware(opts)(Crop)
-	LoadSources(opts)
+// 	err = assertSize(image, 300, 168)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		buf, _ := ioutil.ReadFile("testdata/large.jpg")
-		w.Write(buf)
-	}))
-	defer tsImage.Close()
+// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
+// 		t.Fatalf("Invalid image type")
+// 	}
+// }
 
-	ts := httptest.NewServer(fn)
-	url := ts.URL + "?width=200&height=200&url=" + tsImage.URL
-	defer ts.Close()
+// func setupHTTPSourceServer(opts ServerOptions, filepath string) (*httptest.Server, func()) {
+// 	LoadSources(opts)
 
-	res, err := http.Get(url)
-	if err != nil {
-		t.Fatal("Cannot perform the request")
-	}
-	if res.StatusCode != 200 {
-		t.Fatalf("Invalid response status: %d", res.StatusCode)
-	}
+// 	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+// 		buf, _ := ioutil.ReadFile(filepath)
+// 		w.Write(buf)
+// 	}))
+// 	return tsImage, func() {
+// 		tsImage.Close()
+// 	}
+// }
 
-	image, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(image) == 0 {
-		t.Fatalf("Empty response body")
-	}
+// func TestRemoteHTTPSource(t *testing.T) {
+// 	opts := ServerOptions{}
+// 	tsImage, td := setupHTTPSourceServer(opts, "testdata/large.jpg")
+// 	defer td()
+// 	fn := ImageMiddleware(opts)(Crop)
 
-	err = assertSize(image, 200, 200)
-	if err != nil {
-		t.Error(err)
-	}
+// 	ts := httptest.NewServer(fn)
+// 	url := ts.URL + "?width=200&height=200&url=" + tsImage.URL
+// 	defer ts.Close()
 
-	if bimg.DetermineImageTypeName(image) != "jpeg" {
-		t.Fatalf("Invalid image type")
-	}
-}
+// 	res, err := http.Get(url)
+// 	if err != nil {
+// 		t.Fatal("Cannot perform the request")
+// 	}
+// 	if res.StatusCode != 200 {
+// 		t.Fatalf("Invalid response status: %d", res.StatusCode)
+// 	}
 
-func TestInvalidRemoteHTTPSource(t *testing.T) {
-	opts := ServerOptions{}
-	fn := ImageMiddleware(opts)(Crop)
-	LoadSources(opts)
+// 	image, err := ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if len(image) == 0 {
+// 		t.Fatalf("Empty response body")
+// 	}
 
-	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(400)
-	}))
-	defer tsImage.Close()
+// 	err = assertSize(image, 200, 200)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	ts := httptest.NewServer(fn)
-	url := ts.URL + "?width=200&height=200&url=" + tsImage.URL
-	defer ts.Close()
+// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
+// 		t.Fatalf("Invalid image type")
+// 	}
+// }
 
-	res, err := http.Get(url)
-	if err != nil {
-		t.Fatal("Request failed")
-	}
-	if res.StatusCode != 400 {
-		t.Fatalf("Invalid response status: %d", res.StatusCode)
-	}
-}
+// func TestInvalidRemoteHTTPSource(t *testing.T) {
+// 	opts := ServerOptions{}
+// 	fn := ImageMiddleware(opts)(Crop)
+// 	LoadSources(opts)
 
-func controller(op Operation) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		buf, _ := ioutil.ReadAll(r.Body)
-		imageHandler(w, r, buf, op, ServerOptions{})
-	}
-}
+// 	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+// 		w.WriteHeader(400)
+// 	}))
+// 	defer tsImage.Close()
 
-func testServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(fn))
-}
+// 	ts := httptest.NewServer(fn)
+// 	url := ts.URL + "?width=200&height=200&url=" + tsImage.URL
+// 	defer ts.Close()
+
+// 	res, err := http.Get(url)
+// 	if err != nil {
+// 		t.Fatal("Request failed")
+// 	}
+// 	if res.StatusCode != 400 {
+// 		t.Fatalf("Invalid response status: %d", res.StatusCode)
+// 	}
+// }
+
+// func controller(op Operation) func(w http.ResponseWriter, r *http.Request) {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		buf, _ := ioutil.ReadAll(r.Body)
+// 		imageHandler(w, r, buf, op, ServerOptions{})
+// 	}
+// }
+
+// func testServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
+// 	return httptest.NewServer(http.HandlerFunc(fn))
+// }
 
 func readFile(file string) io.Reader {
 	buf, _ := os.Open(path.Join("testdata", file))

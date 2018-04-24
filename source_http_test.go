@@ -4,44 +4,39 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 )
 
 const fixtureImage = "testdata/large.jpg"
 const fixture1024Bytes = "testdata/1024bytes"
 
-func TestHttpImageSource(t *testing.T) {
-	var body []byte
-	var err error
+// func TestHttpImageSource(t *testing.T) {
+// 	var body []byte
+// 	var err error
 
-	buf, _ := ioutil.ReadFile(fixtureImage)
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write(buf)
-	}))
-	defer ts.Close()
+// 	buf, _ := ioutil.ReadFile(fixtureImage)
+// 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		w.Write(buf)
+// 	}))
+// 	defer ts.Close()
 
-	source := NewHttpImageSource(&SourceConfig{})
-	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
-		if !source.Matches(r) {
-			t.Fatal("Cannot match the request")
-		}
+// 	source := NewHttpImageSource(&SourceConfig{})
+// 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
+// 		body, err = source.GetImage(r, nil)
+// 		if err != nil {
+// 			t.Fatalf("Error while reading the body: %s", err)
+// 		}
+// 		w.Write(body)
+// 	}
 
-		body, err = source.GetImage(r, nil)
-		if err != nil {
-			t.Fatalf("Error while reading the body: %s", err)
-		}
-		w.Write(body)
-	}
+// 	r, _ := http.NewRequest("GET", "http://foo/bar?url="+ts.URL, nil)
+// 	w := httptest.NewRecorder()
+// 	fakeHandler(w, r)
 
-	r, _ := http.NewRequest("GET", "http://foo/bar?url="+ts.URL, nil)
-	w := httptest.NewRecorder()
-	fakeHandler(w, r)
-
-	if len(body) != len(buf) {
-		t.Error("Invalid response body")
-	}
-}
+// 	if len(body) != len(buf) {
+// 		t.Error("Invalid response body")
+// 	}
+// }
 
 func TestHttpImageSourceForwardAuthHeader(t *testing.T) {
 	cases := []string{
@@ -54,9 +49,6 @@ func TestHttpImageSourceForwardAuthHeader(t *testing.T) {
 		r.Header.Set(header, "foobar")
 
 		source := &HttpImageSource{&SourceConfig{AuthForwarding: true}}
-		if !source.Matches(r) {
-			t.Fatal("Cannot match the request")
-		}
 
 		oreq := &http.Request{Header: make(http.Header)}
 		source.setAuthorizationHeader(oreq, r)
@@ -78,9 +70,6 @@ func TestHttpImageSourceError(t *testing.T) {
 
 	source := NewHttpImageSource(&SourceConfig{})
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
-		if !source.Matches(r) {
-			t.Fatal("Cannot match the request")
-		}
 
 		_, err = source.GetImage(r, nil)
 		if err == nil {
@@ -107,10 +96,6 @@ func TestHttpImageSourceExceedsMaximumAllowedLength(t *testing.T) {
 		MaxAllowedSize: 1023,
 	})
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
-		if !source.Matches(r) {
-			t.Fatal("Cannot match the request")
-		}
-
 		body, err = source.GetImage(r, nil)
 		if err == nil {
 			t.Fatalf("It should not allow a request to image exceeding maximum allowed size: %s", err)

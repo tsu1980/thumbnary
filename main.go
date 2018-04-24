@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"runtime"
 	d "runtime/debug"
 	"strconv"
 	"strings"
@@ -95,7 +94,7 @@ type URLSignature struct {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprint(os.Stderr, fmt.Sprintf(usage, Version, runtime.NumCPU()))
+		fmt.Fprint(os.Stderr, fmt.Sprintf(usage, Version))
 	}
 	flag.Parse()
 

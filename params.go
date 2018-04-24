@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -70,19 +69,8 @@ var allowedParams = map[string]string{
 	"q": "int",
 }
 
-func readParams(url *url.URL, o ServerOptions) ImageOptions {
-	r := regexp.MustCompile("/c!/([^/]+)/(.+)")
-	values := r.FindStringSubmatch(url.EscapedPath())
-	if values == nil {
-		params := make(map[string]interface{})
-		for key, kind := range allowedParams {
-			params[key] = parseParam("", kind)
-		}
-		return mapImageParams(params)
-	}
-
-	inputParamsStr := values[1]
-	r = regexp.MustCompile(`([^,=]+)=([^,=]+)`)
+func readParams(inputParamsStr string) ImageOptions {
+	r := regexp.MustCompile(`([^,=]+)=([^,=]+)`)
 	paramsList := r.FindAllStringSubmatch(inputParamsStr, -1)
 	paramsMap := make(map[string]string)
 	for i := 0; i < len(paramsList); i++ {

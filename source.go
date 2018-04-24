@@ -18,7 +18,6 @@ var imageSourceMap = make(map[ImageSourceType]ImageSource)
 var imageSourceFactoryMap = make(map[ImageSourceType]ImageSourceFactoryFunction)
 
 type ImageSource interface {
-	Matches(*http.Request) bool
 	GetImage(*http.Request, *Origin) ([]byte, error)
 }
 
@@ -35,15 +34,6 @@ func LoadSources(o ServerOptions) {
 			MaxAllowedSize: o.MaxAllowedSize,
 		})
 	}
-}
-
-func MatchSource(req *http.Request) ImageSource {
-	for _, source := range imageSourceMap {
-		if source.Matches(req) {
-			return source
-		}
-	}
-	return nil
 }
 
 func GetHttpSource() *HttpImageSource {

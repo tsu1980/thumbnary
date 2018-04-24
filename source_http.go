@@ -8,7 +8,6 @@ import (
 	"path"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 const ImageSourceTypeHttp ImageSourceType = "http"
@@ -19,10 +18,6 @@ type HttpImageSource struct {
 
 func NewHttpImageSource(config *SourceConfig) ImageSource {
 	return &HttpImageSource{config}
-}
-
-func (s *HttpImageSource) Matches(r *http.Request) bool {
-	return r.Method == "GET" && strings.Index(r.URL.Path, "/c!/") != -1
 }
 
 func (s *HttpImageSource) GetImage(req *http.Request, origin *Origin) ([]byte, error) {
