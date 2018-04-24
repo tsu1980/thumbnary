@@ -110,18 +110,20 @@ func FindOrigin(sctx *ServerContext, req *http.Request) (*Origin, error) {
 
 		originId, _ := methodFunc(sctx, req)
 		if originId != "" {
-			sctx.OriginId = originId
 			//log.Printf("Origin id is %s", (string)(originId))
 
 			origin, err := sctx.OriginRepos.Get(originId)
 			if err != nil {
 				return nil, err
 			}
+
+			sctx.OriginId = originId
+			sctx.Origin = origin
 			return origin, nil
 		}
 	}
 
-	return nil, fmt.Errorf("Cannot detect origin id: (req=%#v)", req)
+	return nil, fmt.Errorf("Cannot detect origin id: (methods=%+v) (req=%+v)", sctx.Options.OriginIdDetectMethods, req)
 }
 
 func init() {

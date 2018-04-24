@@ -3,356 +3,295 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"path"
+	"strconv"
+	"strings"
+	"testing"
 
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 
-// import (
-// 	"fmt"
-// 	"io"
-// 	"io/ioutil"
-// 	"net/http"
-// 	"net/http/httptest"
-// 	"os"
-// 	"path"
-// 	"strings"
-// 	"testing"
+func TestIndex(t *testing.T) {
+	ts := testServer(indexController)
+	defer ts.Close()
 
-// 	"gopkg.in/h2non/bimg.v1"
-// )
+	res, err := http.Get(ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// func TestIndex(t *testing.T) {
-// 	ts := testServer(indexController)
-// 	defer ts.Close()
+	if res.StatusCode != 200 {
+		t.Fatalf("Invalid response status: %s", res.Status)
+	}
 
-// 	res, err := http.Get(ts.URL)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	if res.StatusCode != 200 {
-// 		t.Fatalf("Invalid response status: %s", res.Status)
-// 	}
+	if strings.Contains(string(body), "thumbnary") == false {
+		t.Fatalf("Invalid body response: %s", body)
+	}
+}
 
-// 	body, err := ioutil.ReadAll(res.Body)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+func TestCrop(t *testing.T) {
+	opts := ServerOptions{
+		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+	}
+	sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		buf, _ := ioutil.ReadFile("testdata/large.jpg")
+		w.Write(buf)
+	}))
+	defer td()
 
-// 	if strings.Contains(string(body), "thumbnary") == false {
-// 		t.Fatalf("Invalid body response: %s", body)
-// 	}
-// }
+	fn := ImageMiddleware(sctx)(ConvertImage)
+	ts := httptest.NewServer(fn)
+	url := ts.URL + "/c!/w=300/testdata/large.jpg?oid=qic0bfzg"
+	defer ts.Close()
 
-// func TestCrop(t *testing.T) {
-// 	ts := testServer(controller(Crop))
-// 	buf := readFile("large.jpg")
-// 	url := ts.URL + "/c!/w=300"
-// 	defer ts.Close()
+	res, err := http.Get(url)
+	if err != nil {
+		t.Fatal("Cannot perform the request")
+	}
+	if res.StatusCode != 200 {
+		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+	}
 
-// 	res, err := http.Post(url, "image/jpeg", buf)
-// 	if err != nil {
-// 		t.Fatal("Cannot perform the request")
-// 	}
+	if res.Header.Get("Content-Length") == "" {
+		t.Fatal("Empty content length response")
+	}
 
-// 	if res.StatusCode != 200 {
-// 		t.Fatalf("Invalid response status: %s", res.Status)
-// 	}
+	image, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(image) == 0 {
+		t.Fatalf("Empty response body")
+	}
 
-// 	if res.Header.Get("Content-Length") == "" {
-// 		t.Fatal("Empty content length response")
-// 	}
+	err = assertSize(image, 300, 1080)
+	if err != nil {
+		t.Error(err)
+	}
 
-// 	image, err := ioutil.ReadAll(res.Body)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if len(image) == 0 {
-// 		t.Fatalf("Empty response body")
-// 	}
+	if bimg.DetermineImageTypeName(image) != "jpeg" {
+		t.Fatalf("Invalid image type")
+	}
+}
 
-// 	err = assertSize(image, 300, 1080)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+func TestFit(t *testing.T) {
+	opts := ServerOptions{
+		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+	}
+	sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		buf, _ := ioutil.ReadFile("testdata/large.jpg")
+		w.Write(buf)
+	}))
+	defer td()
 
-// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-// 		t.Fatalf("Invalid image type")
-// 	}
-// }
+	fn := ImageMiddleware(sctx)(ConvertImage)
+	ts := httptest.NewServer(fn)
+	url := ts.URL + "/c!/w=300,h=300,m=fit/testdata/large.jpg?oid=qic0bfzg"
+	defer ts.Close()
 
-// func TestResize(t *testing.T) {
-// 	ts := testServer(controller(Resize))
-// 	buf := readFile("large.jpg")
-// 	url := ts.URL + "?width=300"
-// 	defer ts.Close()
+	res, err := http.Get(url)
+	if err != nil {
+		t.Fatal("Cannot perform the request")
+	}
+	if res.StatusCode != 200 {
+		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+	}
 
-// 	res, err := http.Post(url, "image/jpeg", buf)
-// 	if err != nil {
-// 		t.Fatal("Cannot perform the request")
-// 	}
+	image, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(image) == 0 {
+		t.Fatalf("Empty response body")
+	}
 
-// 	if res.StatusCode != 200 {
-// 		t.Fatalf("Invalid response status: %s", res.Status)
-// 	}
+	err = assertSize(image, 300, 168)
+	if err != nil {
+		t.Error(err)
+	}
 
-// 	image, err := ioutil.ReadAll(res.Body)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if len(image) == 0 {
-// 		t.Fatalf("Empty response body")
-// 	}
+	if bimg.DetermineImageTypeName(image) != "jpeg" {
+		t.Fatalf("Invalid image type")
+	}
+}
 
-// 	err = assertSize(image, 300, 1080)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+func TestTypeAuto(t *testing.T) {
+	cases := []struct {
+		acceptHeader string
+		expected     string
+	}{
+		{"", "jpeg"},
+		{"image/webp,*/*", "webp"},
+		{"image/png,*/*", "png"},
+		{"image/webp;q=0.8,image/jpeg", "webp"},
+		{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8", "webp"}, // Chrome
+	}
 
-// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-// 		t.Fatalf("Invalid image type")
-// 	}
-// }
+	for _, test := range cases {
+		opts := ServerOptions{
+			OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+		}
+		sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			buf, _ := ioutil.ReadFile("testdata/large.jpg")
+			w.Write(buf)
+		}))
+		defer td()
 
-// func TestEnlarge(t *testing.T) {
-// 	ts := testServer(controller(Enlarge))
-// 	buf := readFile("large.jpg")
-// 	url := ts.URL + "?width=300&height=200"
-// 	defer ts.Close()
+		fn := ImageMiddleware(sctx)(ConvertImage)
+		ts := httptest.NewServer(fn)
+		url := ts.URL + "/c!/w=300,f=auto/testdata/large.jpg?oid=qic0bfzg"
+		defer ts.Close()
 
-// 	res, err := http.Post(url, "image/jpeg", buf)
-// 	if err != nil {
-// 		t.Fatal("Cannot perform the request")
-// 	}
+		req, _ := http.NewRequest("GET", url, nil)
+		req.Header.Add("Content-Type", "image/jpeg")
+		req.Header.Add("Accept", test.acceptHeader)
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal("Cannot perform the request")
+		}
+		if res.StatusCode != 200 {
+			t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+		}
 
-// 	if res.StatusCode != 200 {
-// 		t.Fatalf("Invalid response status: %s", res.Status)
-// 	}
+		if res.Header.Get("Content-Length") == "" {
+			t.Fatal("Empty content length response")
+		}
 
-// 	image, err := ioutil.ReadAll(res.Body)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if len(image) == 0 {
-// 		t.Fatalf("Empty response body")
-// 	}
+		image, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(image) == 0 {
+			t.Fatalf("Empty response body")
+		}
 
-// 	err = assertSize(image, 300, 200)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+		err = assertSize(image, 300, 1080)
+		if err != nil {
+			t.Error(err)
+		}
 
-// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-// 		t.Fatalf("Invalid image type")
-// 	}
-// }
+		if bimg.DetermineImageTypeName(image) != test.expected {
+			t.Fatalf("Image type expected to '%s', but actual '%s'. (req=%+v)", test.expected, bimg.DetermineImageTypeName(image), req)
+		}
 
-// func TestExtract(t *testing.T) {
-// 	ts := testServer(controller(Extract))
-// 	buf := readFile("large.jpg")
-// 	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120"
-// 	defer ts.Close()
+		if res.Header.Get("Vary") != "Accept" {
+			t.Fatal("Vary header not set correctly")
+		}
+	}
+}
 
-// 	res, err := http.Post(url, "image/jpeg", buf)
-// 	if err != nil {
-// 		t.Fatal("Cannot perform the request")
-// 	}
+func setupTestSourceServer(opts ServerOptions, httpFunc http.HandlerFunc) (*ServerContext, func()) {
+	sctx := NewServerContext(opts)
 
-// 	if res.StatusCode != 200 {
-// 		t.Fatalf("Invalid response status: %s", res.Status)
-// 	}
+	LoadSources(opts)
 
-// 	image, err := ioutil.ReadAll(res.Body)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if len(image) == 0 {
-// 		t.Fatalf("Empty response body")
-// 	}
+	tsImage := httptest.NewServer(httpFunc)
 
-// 	err = assertSize(image, 200, 120)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
+	tsImageURL, _ := url.Parse(tsImage.URL)
 
-// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-// 		t.Fatalf("Invalid image type")
-// 	}
-// }
+	originMap := map[OriginId]*Origin{
+		"qic0bfzg": &Origin{
+			ID:              "qic0bfzg",
+			SourceType:      ImageSourceTypeHttp,
+			Scheme:          tsImageURL.Scheme,
+			Host:            tsImageURL.Host,
+			PathPrefix:      "/",
+			URLSignatureKey: "zdA7VAsZUwZJqg4u",
+		},
+	}
+	sctx.OriginRepos = NewMockOriginRepository(originMap)
 
-// func TestTypeAuto(t *testing.T) {
-// 	cases := []struct {
-// 		acceptHeader string
-// 		expected     string
-// 	}{
-// 		{"", "jpeg"},
-// 		{"image/webp,*/*", "webp"},
-// 		{"image/png,*/*", "png"},
-// 		{"image/webp;q=0.8,image/jpeg", "webp"},
-// 		{"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8", "webp"}, // Chrome
-// 	}
+	return sctx, func() {
+		tsImage.Close()
+	}
+}
 
-// 	for _, test := range cases {
-// 		ts := testServer(controller(Crop))
-// 		buf := readFile("large.jpg")
-// 		url := ts.URL + "?width=300&type=auto"
-// 		defer ts.Close()
+func TestRemoteHTTPSource(t *testing.T) {
+	opts := ServerOptions{
+		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+	}
+	sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		buf, _ := ioutil.ReadFile("testdata/large.jpg")
+		w.Write(buf)
+	}))
+	defer td()
 
-// 		req, _ := http.NewRequest("POST", url, buf)
-// 		req.Header.Add("Content-Type", "image/jpeg")
-// 		req.Header.Add("Accept", test.acceptHeader)
-// 		res, err := http.DefaultClient.Do(req)
-// 		if err != nil {
-// 			t.Fatal("Cannot perform the request")
-// 		}
+	fn := ImageMiddleware(sctx)(ConvertImage)
+	ts := httptest.NewServer(fn)
+	url := ts.URL + "/c!/w=200,h=200/testdata/large.jpg?oid=qic0bfzg"
+	defer ts.Close()
 
-// 		if res.StatusCode != 200 {
-// 			t.Fatalf("Invalid response status: %s", res.Status)
-// 		}
+	res, err := http.Get(url)
+	if err != nil {
+		t.Fatal("Cannot perform the request")
+	}
+	if res.StatusCode != 200 {
+		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+	}
 
-// 		if res.Header.Get("Content-Length") == "" {
-// 			t.Fatal("Empty content length response")
-// 		}
+	image, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(image) == 0 {
+		t.Fatalf("Empty response body")
+	}
 
-// 		image, err := ioutil.ReadAll(res.Body)
-// 		if err != nil {
-// 			t.Fatal(err)
-// 		}
-// 		if len(image) == 0 {
-// 			t.Fatalf("Empty response body")
-// 		}
+	err = assertSize(image, 200, 200)
+	if err != nil {
+		t.Error(err)
+	}
 
-// 		err = assertSize(image, 300, 1080)
-// 		if err != nil {
-// 			t.Error(err)
-// 		}
+	if bimg.DetermineImageTypeName(image) != "jpeg" {
+		t.Fatalf("Invalid image type")
+	}
+}
 
-// 		if bimg.DetermineImageTypeName(image) != test.expected {
-// 			t.Fatalf("Invalid image type")
-// 		}
+func TestInvalidRemoteHTTPSource(t *testing.T) {
+	opts := ServerOptions{
+		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+	}
+	sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(400)
+	}))
+	defer td()
 
-// 		if res.Header.Get("Vary") != "Accept" {
-// 			t.Fatal("Vary header not set correctly")
-// 		}
-// 	}
-// }
+	fn := ImageMiddleware(sctx)(ConvertImage)
+	LoadSources(opts)
 
-// func TestFit(t *testing.T) {
-// 	ts := testServer(controller(Fit))
-// 	buf := readFile("large.jpg")
-// 	url := ts.URL + "?width=300&height=300"
-// 	defer ts.Close()
+	ts := httptest.NewServer(fn)
+	url := ts.URL + "/c!/w=200,h=200/testdata/large.jpg?oid=qic0bfzg"
+	defer ts.Close()
 
-// 	res, err := http.Post(url, "image/jpeg", buf)
-// 	if err != nil {
-// 		t.Fatal("Cannot perform the request")
-// 	}
+	res, err := http.Get(url)
+	if err != nil {
+		t.Fatal("Request failed")
+	}
+	if res.StatusCode != 400 {
+		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+	}
+}
 
-// 	if res.StatusCode != 200 {
-// 		t.Fatalf("Invalid response status: %s", res.Status)
-// 	}
+func controller(op Operation) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		buf, _ := ioutil.ReadAll(r.Body)
+		imageHandler(w, r, buf, op, ServerOptions{})
+	}
+}
 
-// 	image, err := ioutil.ReadAll(res.Body)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if len(image) == 0 {
-// 		t.Fatalf("Empty response body")
-// 	}
-
-// 	err = assertSize(image, 300, 168)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-
-// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-// 		t.Fatalf("Invalid image type")
-// 	}
-// }
-
-// func setupHTTPSourceServer(opts ServerOptions, filepath string) (*httptest.Server, func()) {
-// 	LoadSources(opts)
-
-// 	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-// 		buf, _ := ioutil.ReadFile(filepath)
-// 		w.Write(buf)
-// 	}))
-// 	return tsImage, func() {
-// 		tsImage.Close()
-// 	}
-// }
-
-// func TestRemoteHTTPSource(t *testing.T) {
-// 	opts := ServerOptions{}
-// 	tsImage, td := setupHTTPSourceServer(opts, "testdata/large.jpg")
-// 	defer td()
-// 	fn := ImageMiddleware(opts)(Crop)
-
-// 	ts := httptest.NewServer(fn)
-// 	url := ts.URL + "?width=200&height=200&url=" + tsImage.URL
-// 	defer ts.Close()
-
-// 	res, err := http.Get(url)
-// 	if err != nil {
-// 		t.Fatal("Cannot perform the request")
-// 	}
-// 	if res.StatusCode != 200 {
-// 		t.Fatalf("Invalid response status: %d", res.StatusCode)
-// 	}
-
-// 	image, err := ioutil.ReadAll(res.Body)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if len(image) == 0 {
-// 		t.Fatalf("Empty response body")
-// 	}
-
-// 	err = assertSize(image, 200, 200)
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-
-// 	if bimg.DetermineImageTypeName(image) != "jpeg" {
-// 		t.Fatalf("Invalid image type")
-// 	}
-// }
-
-// func TestInvalidRemoteHTTPSource(t *testing.T) {
-// 	opts := ServerOptions{}
-// 	fn := ImageMiddleware(opts)(Crop)
-// 	LoadSources(opts)
-
-// 	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-// 		w.WriteHeader(400)
-// 	}))
-// 	defer tsImage.Close()
-
-// 	ts := httptest.NewServer(fn)
-// 	url := ts.URL + "?width=200&height=200&url=" + tsImage.URL
-// 	defer ts.Close()
-
-// 	res, err := http.Get(url)
-// 	if err != nil {
-// 		t.Fatal("Request failed")
-// 	}
-// 	if res.StatusCode != 400 {
-// 		t.Fatalf("Invalid response status: %d", res.StatusCode)
-// 	}
-// }
-
-// func controller(op Operation) func(w http.ResponseWriter, r *http.Request) {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		buf, _ := ioutil.ReadAll(r.Body)
-// 		imageHandler(w, r, buf, op, ServerOptions{})
-// 	}
-// }
-
-// func testServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
-// 	return httptest.NewServer(http.HandlerFunc(fn))
-// }
+func testServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(fn))
+}
 
 func readFile(file string) io.Reader {
 	buf, _ := os.Open(path.Join("testdata", file))
@@ -368,4 +307,35 @@ func assertSize(buf []byte, width, height int) error {
 		return fmt.Errorf("Invalid image size: %dx%d", size.Width, size.Height)
 	}
 	return nil
+}
+
+func BodyAsString(res *http.Response) string {
+	contentLength, _ := strconv.Atoi(res.Header.Get("Content-Length"))
+	body := make([]byte, contentLength)
+	len, _ := res.Body.Read(body)
+	return string(body[:len])
+}
+
+type MockOriginRepository struct {
+	Origins map[OriginId]*Origin
+}
+
+func NewMockOriginRepository(origins map[OriginId]*Origin) OriginRepository {
+	return &MockOriginRepository{Origins: origins}
+}
+
+func (repo *MockOriginRepository) Open() error {
+	return nil
+}
+
+func (repo *MockOriginRepository) Close() {
+}
+
+func (repo *MockOriginRepository) Get(originId OriginId) (*Origin, error) {
+	origin, ok := repo.Origins[originId]
+	if !ok {
+		return nil, fmt.Errorf("Origin not found: (originId=%s)", originId)
+	}
+
+	return origin, nil
 }

@@ -41,6 +41,7 @@ type ServerOptions struct {
 type ServerContext struct {
 	Options     ServerOptions
 	OriginId    OriginId
+	Origin      *Origin
 	OriginRepos OriginRepository
 }
 

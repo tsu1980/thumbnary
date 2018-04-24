@@ -36,7 +36,7 @@ func Middleware(fn func(http.ResponseWriter, *http.Request), o ServerOptions) ht
 
 func ImageMiddleware(sctx *ServerContext) func(Operation) http.Handler {
 	return func(fn Operation) http.Handler {
-		handler := Middleware(imageController(sctx, Operation(fn)), sctx.Options)
+		handler := determineOrigin(Middleware(imageController(sctx, Operation(fn)), sctx.Options), sctx)
 
 		if sctx.Options.EnableURLSignature == true {
 			return validateURLSignature(handler, sctx.Options)
@@ -131,6 +131,18 @@ func getCacheControl(ttl int) string {
 
 func isPublicPath(path string) bool {
 	return path == "/" || path == "/health" || path == "/form"
+}
+
+func determineOrigin(next http.Handler, sctx *ServerContext) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		_, err := FindOrigin(sctx, req)
+		if err != nil {
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
+			return
+		}
+
+		next.ServeHTTP(w, req)
+	})
 }
 
 func validateURLSignature(next http.Handler, o ServerOptions) http.Handler {
