@@ -136,6 +136,8 @@ func main() {
 		MaxAllowedSize:     *aMaxAllowedSize,
 	}
 
+	sctx := NewServerContext(opts)
+
 	// Create a memory release goroutine
 	if *aMRelease > 0 {
 		memoryRelease(*aMRelease)
@@ -184,18 +186,20 @@ func main() {
 	// Load image source providers
 	LoadSources(opts)
 
-	err1 := OpenDB(opts)
+	// Create and open origin repository
+	var err1 error
+	sctx.OriginRepos, err1 = NewOriginRepository("mysql", opts)
 	if err1 != nil {
-		exitWithError("failed to open database: %s", err1)
+		exitWithError("failed to create origin repository: %s", err1.Error())
 	}
 
-	err1 = StartRedis(opts)
+	err1 = sctx.OriginRepos.Open()
 	if err1 != nil {
-		exitWithError("failed to start redis: %s", err1)
+		exitWithError("failed to open origin repository: %s", err1.Error())
 	}
 
 	// Start the server
-	err := Server(opts)
+	err := Server(sctx)
 	if err != nil {
 		exitWithError("cannot start the server: %s", err)
 	}

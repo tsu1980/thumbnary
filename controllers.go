@@ -33,32 +33,32 @@ func healthController(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func imageController(o ServerOptions, operation Operation) func(http.ResponseWriter, *http.Request) {
+func imageController(sctx *ServerContext, operation Operation) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		origin, err := FindOrigin(o, req)
+		origin, err := FindOrigin(sctx, req)
 		if err != nil {
-			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
 			return
 		}
 
 		imageSource := imageSourceMap[origin.SourceType]
 		if imageSource == nil {
-			ErrorReply(req, w, ErrMissingImageSource, o)
+			ErrorReply(req, w, ErrMissingImageSource, sctx.Options)
 			return
 		}
 
 		buf, err := imageSource.GetImage(req, origin)
 		if err != nil {
-			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
 			return
 		}
 
 		if len(buf) == 0 {
-			ErrorReply(req, w, ErrEmptyBody, o)
+			ErrorReply(req, w, ErrEmptyBody, sctx.Options)
 			return
 		}
 
-		imageHandler(w, req, buf, operation, o)
+		imageHandler(w, req, buf, operation, sctx.Options)
 	}
 }
 

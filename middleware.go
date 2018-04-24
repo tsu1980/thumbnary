@@ -1,13 +1,13 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 
 	"github.com/rs/cors"
 	"gopkg.in/h2non/bimg.v1"
@@ -34,12 +34,12 @@ func Middleware(fn func(http.ResponseWriter, *http.Request), o ServerOptions) ht
 	return validate(defaultHeaders(next), o)
 }
 
-func ImageMiddleware(o ServerOptions) func(Operation) http.Handler {
+func ImageMiddleware(sctx *ServerContext) func(Operation) http.Handler {
 	return func(fn Operation) http.Handler {
-		handler := Middleware(imageController(o, Operation(fn)), o)
+		handler := Middleware(imageController(sctx, Operation(fn)), sctx.Options)
 
-		if o.EnableURLSignature == true {
-			return validateURLSignature(handler, o)
+		if sctx.Options.EnableURLSignature == true {
+			return validateURLSignature(handler, sctx.Options)
 		}
 
 		return handler

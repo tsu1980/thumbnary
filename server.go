@@ -36,19 +36,28 @@ type ServerOptions struct {
 	PlaceholderImage   []byte
 }
 
-func Server(o ServerOptions) error {
-	addr := o.Address + ":" + strconv.Itoa(o.Port)
-	handler := NewLog(NewHTTPHandler(o), os.Stdout)
+type ServerContext struct {
+	Options     ServerOptions
+	OriginRepos OriginRepository
+}
+
+func NewServerContext(o ServerOptions) *ServerContext {
+	return &ServerContext{Options: o}
+}
+
+func Server(sctx *ServerContext) error {
+	addr := sctx.Options.Address + ":" + strconv.Itoa(sctx.Options.Port)
+	handler := NewLog(NewHTTPHandler(sctx), os.Stdout)
 
 	server := &http.Server{
 		Addr:           addr,
 		Handler:        handler,
 		MaxHeaderBytes: 1 << 20,
-		ReadTimeout:    time.Duration(o.HTTPReadTimeout) * time.Second,
-		WriteTimeout:   time.Duration(o.HTTPWriteTimeout) * time.Second,
+		ReadTimeout:    time.Duration(sctx.Options.HTTPReadTimeout) * time.Second,
+		WriteTimeout:   time.Duration(sctx.Options.HTTPWriteTimeout) * time.Second,
 	}
 
-	return listenAndServe(server, o)
+	return listenAndServe(server, sctx.Options)
 }
 
 func listenAndServe(s *http.Server, o ServerOptions) error {
@@ -59,24 +68,24 @@ func listenAndServe(s *http.Server, o ServerOptions) error {
 }
 
 type MyHttpHandler struct {
-	Options ServerOptions
+	ServerContext *ServerContext
 }
 
-func NewHTTPHandler(o ServerOptions) *MyHttpHandler {
-	return &MyHttpHandler{Options: o}
+func NewHTTPHandler(sctx *ServerContext) *MyHttpHandler {
+	return &MyHttpHandler{ServerContext: sctx}
 }
 
 func (h *MyHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
-		Middleware(indexController, h.Options).ServeHTTP(w, r)
+		Middleware(indexController, h.ServerContext.Options).ServeHTTP(w, r)
 		return
 	}
 
 	if r.URL.Path == "/health" {
-		Middleware(healthController, h.Options).ServeHTTP(w, r)
+		Middleware(healthController, h.ServerContext.Options).ServeHTTP(w, r)
 		return
 	}
 
-	image := ImageMiddleware(h.Options)
+	image := ImageMiddleware(h.ServerContext)
 	image(ConvertImage).ServeHTTP(w, r)
 }
