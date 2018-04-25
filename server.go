@@ -82,13 +82,9 @@ func NewHTTPHandler(sctx *ServerContext) *MyHttpHandler {
 func (h *MyHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
 		Middleware(indexController, h.ServerContext.Options).ServeHTTP(w, r)
-		return
-	}
-
-	if r.URL.Path == "/health" {
+	} else if r.URL.Path == "/health" {
 		Middleware(healthController, h.ServerContext.Options).ServeHTTP(w, r)
-		return
+	} else {
+		ImageMiddleware(h.ServerContext).ServeHTTP(w, r)
 	}
-
-	ImageMiddleware(h.ServerContext).ServeHTTP(w, r)
 }

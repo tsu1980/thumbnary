@@ -15,6 +15,11 @@ type Image struct {
 
 // ImageInfo represents an image details and additional metadata
 type ImageInfo struct {
+	Version int             `json:"version"`
+	Source  ImageInfoSource `json:"source"`
+}
+
+type ImageInfoSource struct {
 	Width       int    `json:"width"`
 	Height      int    `json:"height"`
 	Type        string `json:"type"`
@@ -25,7 +30,7 @@ type ImageInfo struct {
 	Orientation int    `json:"orientation"`
 }
 
-func Info(buf []byte, o ImageOptions) (Image, error) {
+func InfoImage(buf []byte, o ImageOptions) (Image, error) {
 	// We're not handling an image here, but we reused the struct.
 	// An interface will be definitively better here.
 	image := Image{Mime: "application/json"}
@@ -36,14 +41,17 @@ func Info(buf []byte, o ImageOptions) (Image, error) {
 	}
 
 	info := ImageInfo{
-		Width:       meta.Size.Width,
-		Height:      meta.Size.Height,
-		Type:        meta.Type,
-		Space:       meta.Space,
-		Alpha:       meta.Alpha,
-		Profile:     meta.Profile,
-		Channels:    meta.Channels,
-		Orientation: meta.Orientation,
+		Version: 1,
+		Source: ImageInfoSource{
+			Width:       meta.Size.Width,
+			Height:      meta.Size.Height,
+			Type:        meta.Type,
+			Space:       meta.Space,
+			Alpha:       meta.Alpha,
+			Profile:     meta.Profile,
+			Channels:    meta.Channels,
+			Orientation: meta.Orientation,
+		},
 	}
 
 	body, _ := json.Marshal(info)
