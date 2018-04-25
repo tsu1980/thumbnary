@@ -49,7 +49,7 @@ func TestCrop(t *testing.T) {
 	}))
 	defer td()
 
-	fn := ImageMiddleware(sctx)(ConvertImage)
+	fn := ImageMiddleware(sctx)
 	ts := httptest.NewServer(fn)
 	url := ts.URL + "/c!/w=300/testdata/large.jpg?oid=qic0bfzg"
 	defer ts.Close()
@@ -94,7 +94,7 @@ func TestFit(t *testing.T) {
 	}))
 	defer td()
 
-	fn := ImageMiddleware(sctx)(ConvertImage)
+	fn := ImageMiddleware(sctx)
 	ts := httptest.NewServer(fn)
 	url := ts.URL + "/c!/w=300,h=300,m=fit/testdata/large.jpg?oid=qic0bfzg"
 	defer ts.Close()
@@ -147,7 +147,7 @@ func TestTypeAuto(t *testing.T) {
 		}))
 		defer td()
 
-		fn := ImageMiddleware(sctx)(ConvertImage)
+		fn := ImageMiddleware(sctx)
 		ts := httptest.NewServer(fn)
 		url := ts.URL + "/c!/w=300,f=auto/testdata/large.jpg?oid=qic0bfzg"
 		defer ts.Close()
@@ -226,7 +226,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 	}))
 	defer td()
 
-	fn := ImageMiddleware(sctx)(ConvertImage)
+	fn := ImageMiddleware(sctx)
 	ts := httptest.NewServer(fn)
 	url := ts.URL + "/c!/w=200,h=200/testdata/large.jpg?oid=qic0bfzg"
 	defer ts.Close()
@@ -266,7 +266,7 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 	}))
 	defer td()
 
-	fn := ImageMiddleware(sctx)(ConvertImage)
+	fn := ImageMiddleware(sctx)
 	LoadSources(opts)
 
 	ts := httptest.NewServer(fn)
@@ -279,13 +279,6 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 	}
 	if res.StatusCode != 400 {
 		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
-	}
-}
-
-func controller(op Operation) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		buf, _ := ioutil.ReadAll(r.Body)
-		imageHandler(w, r, buf, op, ServerOptions{})
 	}
 }
 

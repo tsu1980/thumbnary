@@ -1,8 +1,6 @@
 package main
 
-import (
-	"net/http"
-)
+import "net/http"
 
 type ImageSourceType string
 type ImageSourceFactoryFunction func(*SourceConfig) ImageSource
@@ -18,7 +16,7 @@ var imageSourceMap = make(map[ImageSourceType]ImageSource)
 var imageSourceFactoryMap = make(map[ImageSourceType]ImageSourceFactoryFunction)
 
 type ImageSource interface {
-	GetImage(*http.Request, *Origin) ([]byte, error)
+	GetImage(*http.Request, *Origin, string) ([]byte, error)
 }
 
 func RegisterSource(sourceType ImageSourceType, factory ImageSourceFactoryFunction) {

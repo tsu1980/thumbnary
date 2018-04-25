@@ -90,6 +90,5 @@ func (h *MyHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	image := ImageMiddleware(h.ServerContext)
-	image(ConvertImage).ServeHTTP(w, r)
+	ImageMiddleware(h.ServerContext).ServeHTTP(w, r)
 }

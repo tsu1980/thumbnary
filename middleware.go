@@ -34,16 +34,14 @@ func Middleware(fn func(http.ResponseWriter, *http.Request), o ServerOptions) ht
 	return validate(defaultHeaders(next), o)
 }
 
-func ImageMiddleware(sctx *ServerContext) func(Operation) http.Handler {
-	return func(fn Operation) http.Handler {
-		handler := determineOrigin(Middleware(imageController(sctx, Operation(fn)), sctx.Options), sctx)
+func ImageMiddleware(sctx *ServerContext) http.Handler {
+	handler := determineOrigin(Middleware(imageController(sctx), sctx.Options), sctx)
 
-		if sctx.Options.EnableURLSignature == true {
-			return validateURLSignature(handler, sctx.Options)
-		}
-
-		return handler
+	if sctx.Options.EnableURLSignature == true {
+		return validateURLSignature(handler, sctx.Options)
 	}
+
+	return handler
 }
 
 func throttleError(err error) http.Handler {

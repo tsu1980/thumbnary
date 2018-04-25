@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"regexp"
@@ -145,9 +144,6 @@ func parseParam(param, kind string) interface{} {
 	if kind == "extend" {
 		return parseExtendMode(param)
 	}
-	if kind == "json" {
-		return parseJSONOperations(param)
-	}
 	if kind == "hexcolor" {
 		return parseHexColor(param)
 	}
@@ -200,7 +196,6 @@ func mapImageParams(params map[string]interface{}) ImageOptions {
 		Background:    params["background"].([]uint8),
 		Sigma:         params["sigma"].(float64),
 		MinAmpl:       params["minampl"].(float64),
-		Operations:    params["operations"].(PipelineOperations),
 
 		NewWidth:          params["w"].(int),
 		NewHeight:         params["h"].(int),
@@ -282,12 +277,6 @@ func parseRectFloat(val string) []float32 {
 		return []float32{x1, y1, x2, y2}
 	}
 	return []float32{x1, y1, x2, y2}
-}
-
-func parseJSONOperations(data string) PipelineOperations {
-	operations := PipelineOperations{}
-	json.Unmarshal([]byte(data), &operations)
-	return operations
 }
 
 func parseExtendMode(val string) bimg.Extend {

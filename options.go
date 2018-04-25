@@ -6,24 +6,24 @@ type ResizeMode int
 
 const (
 	ResizeModeScale ResizeMode = 0
-	ResizeModeCrop ResizeMode = 1
-	ResizeModeFit ResizeMode = 2
-	ResizeModePad ResizeMode = 4
+	ResizeModeCrop  ResizeMode = 1
+	ResizeModeFit   ResizeMode = 2
+	ResizeModePad   ResizeMode = 4
 )
 
 type Gravity9 int
 
 const (
-	Gravity9TopLeft Gravity9 = 1
-	Gravity9TopCenter Gravity9 = 2
-	Gravity9TopRight Gravity9 = 3
-	Gravity9MiddleLeft Gravity9 = 4
+	Gravity9TopLeft      Gravity9 = 1
+	Gravity9TopCenter    Gravity9 = 2
+	Gravity9TopRight     Gravity9 = 3
+	Gravity9MiddleLeft   Gravity9 = 4
 	Gravity9MiddleCenter Gravity9 = 5
-	Gravity9MiddleRight Gravity9 = 6
-	Gravity9BottomLeft Gravity9 = 7
+	Gravity9MiddleRight  Gravity9 = 6
+	Gravity9BottomLeft   Gravity9 = 7
 	Gravity9BottomCenter Gravity9 = 8
-	Gravity9BottomRight Gravity9 = 9
-	Gravity9Smart Gravity9 = 20
+	Gravity9BottomRight  Gravity9 = 9
+	Gravity9Smart        Gravity9 = 20
 )
 
 // ImageOptions represent all the supported image transformation params as first level members
@@ -61,42 +61,29 @@ type ImageOptions struct {
 	Extend        bimg.Extend
 	Gravity       bimg.Gravity
 	Colorspace    bimg.Interpretation
-	Operations    PipelineOperations
 
-    // for new url format
+	// for new url format
 	NewWidth      int
 	NewHeight     int
 	NewUpscale    bool
 	NewResizeMode ResizeMode
-//	NewClip       []int
-//	NewClipRate   []float
+	//	NewClip       []int
+	//	NewClipRate   []float
 	NewGravity    Gravity9
 	NewBackground []uint8
 
-    NewOverlayURL string
-	NewOverlayBuf []byte
-    NewOverlayX   int
-    NewOverlayY   int
-    NewOverlayGravity Gravity9
-    NewOverlayOpacity float32
+	NewOverlayURL     string
+	NewOverlayBuf     []byte
+	NewOverlayX       int
+	NewOverlayY       int
+	NewOverlayGravity Gravity9
+	NewOverlayOpacity float32
 
 	NewMonochrome bool
 
-	NewFileType   string
-	NewQuality    int
+	NewFileType string
+	NewQuality  int
 }
-
-// PipelineOperation represents the structure for an operation field.
-type PipelineOperation struct {
-	Name          string                 `json:"operation"`
-	IgnoreFailure bool                   `json:"ignore_failure"`
-	Params        map[string]interface{} `json:"params"`
-	ImageOptions  ImageOptions           `json:"-"`
-	Operation     Operation              `json:"-"`
-}
-
-// PipelineOperations defines the expected interface for a list of operations.
-type PipelineOperations []PipelineOperation
 
 // BimgOptions creates a new bimg compatible options struct mapping the fields properly
 func BimgOptions(o ImageOptions) bimg.Options {

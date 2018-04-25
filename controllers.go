@@ -15,6 +15,11 @@ import (
 	"gopkg.in/h2non/filetype.v0"
 )
 
+type ImageRequest struct {
+	Options ImageOptions
+	Path    string
+}
+
 func indexController(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		ErrorReply(r, w, ErrNotFound, ServerOptions{})
@@ -33,7 +38,7 @@ func healthController(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func imageController(sctx *ServerContext, operation Operation) func(http.ResponseWriter, *http.Request) {
+func imageController(sctx *ServerContext) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		imageSource := imageSourceMap[sctx.Origin.SourceType]
 		if imageSource == nil {
@@ -41,7 +46,20 @@ func imageController(sctx *ServerContext, operation Operation) func(http.Respons
 			return
 		}
 
-		buf, err := imageSource.GetImage(req, sctx.Origin)
+		r := regexp.MustCompile("/c!/([^/]+)/(.+)")
+		values := r.FindStringSubmatch(req.URL.EscapedPath())
+		if values == nil {
+			err := fmt.Errorf("Bad URL format: %s", req.URL.EscapedPath())
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
+			return
+		}
+
+		imgReq := &ImageRequest{}
+		imgReq.Options = readParams(values[1])
+		//log.Printf("readParams: %#v\n", opts)
+		imgReq.Path = values[2]
+
+		buf, err := imageSource.GetImage(req, sctx.Origin, imgReq.Path)
 		if err != nil {
 			ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
 			return
@@ -52,7 +70,7 @@ func imageController(sctx *ServerContext, operation Operation) func(http.Respons
 			return
 		}
 
-		imageHandler(w, req, buf, operation, sctx.Options)
+		imageHandler(w, req, buf, imgReq, sctx.Options)
 	}
 }
 
@@ -71,7 +89,7 @@ func determineAcceptMimeType(accept string) string {
 	return ""
 }
 
-func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, Operation Operation, o ServerOptions) {
+func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, imgReq *ImageRequest, o ServerOptions) {
 	// Infer the body MIME type via mimesniff algorithm
 	mimeType := http.DetectContentType(buf)
 
@@ -96,15 +114,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, Operation 
 		return
 	}
 
-	var inputParamsStr = ""
-	r2 := regexp.MustCompile("/c!/([^/]+)/(.+)")
-	values := r2.FindStringSubmatch(r.URL.EscapedPath())
-	if values != nil {
-		inputParamsStr = values[1]
-	}
-
-	opts := readParams(inputParamsStr)
-	//log.Printf("readParams: %#v\n", opts)
+	opts := imgReq.Options
 	vary := ""
 	if opts.Type == "auto" {
 		opts.Type = determineAcceptMimeType(r.Header.Get("Accept"))
@@ -137,7 +147,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, Operation 
 		opts.NewOverlayBuf = overlayBuf
 	}
 
-	image, err := Operation.Run(buf, opts)
+	image, err := ConvertImage(buf, opts)
 	if err != nil {
 		ErrorReply(r, w, NewError("Error while processing the image: "+err.Error(), BadRequest), o)
 		return
@@ -150,46 +160,4 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, Operation 
 		w.Header().Set("Vary", vary)
 	}
 	w.Write(image.Body)
-}
-
-func formController(w http.ResponseWriter, r *http.Request) {
-	operations := []struct {
-		name   string
-		method string
-		args   string
-	}{
-		{"Resize", "resize", "width=300&height=200&type=jpeg"},
-		{"Force resize", "resize", "width=300&height=200&force=true"},
-		{"Crop", "crop", "width=300&quality=95"},
-		{"SmartCrop", "crop", "width=300&height=260&quality=95&gravity=smart"},
-		{"Extract", "extract", "top=100&left=100&areawidth=300&areaheight=150"},
-		{"Enlarge", "enlarge", "width=1440&height=900&quality=95"},
-		{"Rotate", "rotate", "rotate=180"},
-		{"Flip", "flip", ""},
-		{"Flop", "flop", ""},
-		{"Thumbnail", "thumbnail", "width=100"},
-		{"Zoom", "zoom", "factor=2&areawidth=300&top=80&left=80"},
-		{"Color space (black&white)", "resize", "width=400&height=300&colorspace=bw"},
-		{"Add watermark", "watermark", "textwidth=100&text=Hello&font=sans%2012&opacity=0.5&color=255,200,50"},
-		{"Convert format", "convert", "type=png"},
-		{"Image metadata", "info", ""},
-		{"Gaussian blur", "blur", "sigma=15.0&minampl=0.2"},
-		{"Pipeline (image reduction via multiple transformations)", "pipeline", "operations=%5B%7B%22operation%22:%20%22crop%22,%20%22params%22:%20%7B%22width%22:%20300,%20%22height%22:%20260%7D%7D,%20%7B%22operation%22:%20%22convert%22,%20%22params%22:%20%7B%22type%22:%20%22webp%22%7D%7D%5D"},
-	}
-
-	html := "<html><body>"
-
-	for _, form := range operations {
-		html += fmt.Sprintf(`
-    <h1>%s</h1>
-    <form method="POST" action="/%s?%s" enctype="multipart/form-data">
-      <input type="file" name="file" />
-      <input type="submit" value="Upload" />
-    </form>`, form.name, form.method, form.args)
-	}
-
-	html += "</body></html>"
-
-	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(html))
 }

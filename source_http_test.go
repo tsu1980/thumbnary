@@ -4,39 +4,50 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
 const fixtureImage = "testdata/large.jpg"
 const fixture1024Bytes = "testdata/1024bytes"
 
-// func TestHttpImageSource(t *testing.T) {
-// 	var body []byte
-// 	var err error
+func TestHttpImageSource(t *testing.T) {
+	var body []byte
+	var err error
 
-// 	buf, _ := ioutil.ReadFile(fixtureImage)
-// 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		w.Write(buf)
-// 	}))
-// 	defer ts.Close()
+	buf, _ := ioutil.ReadFile(fixtureImage)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write(buf)
+	}))
+	defer ts.Close()
 
-// 	source := NewHttpImageSource(&SourceConfig{})
-// 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
-// 		body, err = source.GetImage(r, nil)
-// 		if err != nil {
-// 			t.Fatalf("Error while reading the body: %s", err)
-// 		}
-// 		w.Write(body)
-// 	}
+	source := NewHttpImageSource(&SourceConfig{})
+	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
+		tsURL, _ := url.Parse(ts.URL)
+		origin := &Origin{
+			ID:              "qic0bfzg",
+			SourceType:      ImageSourceTypeHttp,
+			Scheme:          tsURL.Scheme,
+			Host:            tsURL.Host,
+			PathPrefix:      "/",
+			URLSignatureKey: "zdA7VAsZUwZJqg4u",
+		}
 
-// 	r, _ := http.NewRequest("GET", "http://foo/bar?url="+ts.URL, nil)
-// 	w := httptest.NewRecorder()
-// 	fakeHandler(w, r)
+		body, err = source.GetImage(r, origin, "abc.jpg")
+		if err != nil {
+			t.Fatalf("Error while reading the body: %s", err)
+		}
+		w.Write(body)
+	}
 
-// 	if len(body) != len(buf) {
-// 		t.Error("Invalid response body")
-// 	}
-// }
+	r, _ := http.NewRequest("GET", "http://foo/bar?url="+ts.URL, nil)
+	w := httptest.NewRecorder()
+	fakeHandler(w, r)
+
+	if len(body) != len(buf) {
+		t.Error("Invalid response body")
+	}
+}
 
 func TestHttpImageSourceForwardAuthHeader(t *testing.T) {
 	cases := []string{
@@ -70,8 +81,17 @@ func TestHttpImageSourceError(t *testing.T) {
 
 	source := NewHttpImageSource(&SourceConfig{})
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
+		tsURL, _ := url.Parse(ts.URL)
+		origin := &Origin{
+			ID:              "qic0bfzg",
+			SourceType:      ImageSourceTypeHttp,
+			Scheme:          tsURL.Scheme,
+			Host:            tsURL.Host,
+			PathPrefix:      "/",
+			URLSignatureKey: "zdA7VAsZUwZJqg4u",
+		}
 
-		_, err = source.GetImage(r, nil)
+		_, err = source.GetImage(r, origin, "abc.jpg")
 		if err == nil {
 			t.Fatalf("Server response should not be valid: %s", err)
 		}
@@ -96,7 +116,17 @@ func TestHttpImageSourceExceedsMaximumAllowedLength(t *testing.T) {
 		MaxAllowedSize: 1023,
 	})
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
-		body, err = source.GetImage(r, nil)
+		tsURL, _ := url.Parse(ts.URL)
+		origin := &Origin{
+			ID:              "qic0bfzg",
+			SourceType:      ImageSourceTypeHttp,
+			Scheme:          tsURL.Scheme,
+			Host:            tsURL.Host,
+			PathPrefix:      "/",
+			URLSignatureKey: "zdA7VAsZUwZJqg4u",
+		}
+
+		body, err = source.GetImage(r, origin, "abc.jpg")
 		if err == nil {
 			t.Fatalf("It should not allow a request to image exceeding maximum allowed size: %s", err)
 		}

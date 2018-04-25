@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"regexp"
 	"strconv"
 )
 
@@ -20,12 +19,18 @@ func NewHttpImageSource(config *SourceConfig) ImageSource {
 	return &HttpImageSource{config}
 }
 
-func (s *HttpImageSource) GetImage(req *http.Request, origin *Origin) ([]byte, error) {
-	url, err := s.parseURL(req, origin)
+func (s *HttpImageSource) GetImage(ireq *http.Request, origin *Origin, relPath string) ([]byte, error) {
+	u := &url.URL{
+		Scheme: origin.Scheme,
+		Host:   origin.Host,
+		Path:   path.Join(origin.PathPrefix, relPath),
+	}
+	url, err := url.Parse(u.String())
 	if err != nil {
 		return nil, err
 	}
-	return s.fetchImage(url, req)
+
+	return s.fetchImage(url, ireq)
 }
 
 func (s *HttpImageSource) fetchImage(url *url.URL, ireq *http.Request) ([]byte, error) {
@@ -77,23 +82,6 @@ func (s *HttpImageSource) setAuthorizationHeader(req *http.Request, ireq *http.R
 	if auth != "" {
 		req.Header.Set("Authorization", auth)
 	}
-}
-
-func (s *HttpImageSource) parseURL(request *http.Request, origin *Origin) (*url.URL, error) {
-	r := regexp.MustCompile("/c!/([^/]+)/(.+)")
-	values := r.FindStringSubmatch(request.URL.EscapedPath())
-	if values == nil {
-		return nil, fmt.Errorf("Bad URL format: %s", request.URL.EscapedPath())
-	}
-
-	var relativePath = values[2]
-
-	u := &url.URL{
-		Scheme: origin.Scheme,
-		Host:   origin.Host,
-		Path:   path.Join(origin.PathPrefix, relativePath),
-	}
-	return url.Parse(u.String())
 }
 
 func newHTTPRequest(s *HttpImageSource, ireq *http.Request, method string, url *url.URL) *http.Request {
