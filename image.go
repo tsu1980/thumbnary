@@ -54,14 +54,15 @@ func Info(buf []byte, o ImageOptions) (Image, error) {
 
 func ConvertImage(buf []byte, o ImageOptions) (Image, error) {
 	opts := BimgOptions(o)
-	switch o.NewResizeMode {
+
+	switch o.ResizeMode {
 	case ResizeModeCrop:
-		if o.NewWidth == 0 && o.NewHeight == 0 {
+		if o.Width == 0 && o.Height == 0 {
 			return Image{}, NewError("Missing required param: height or width", BadRequest)
 		}
 		opts.Crop = true
 	case ResizeModeFit:
-		if o.NewWidth == 0 || o.NewHeight == 0 {
+		if o.Width == 0 || o.Height == 0 {
 			return Image{}, NewError("Missing required params: height, width", BadRequest)
 		}
 		dims, err := bimg.Size(buf)
@@ -71,60 +72,28 @@ func ConvertImage(buf []byte, o ImageOptions) (Image, error) {
 
 		// if input ratio > output ratio
 		// (calculation multiplied through by denominators to avoid float division)
-		if dims.Width*o.NewHeight > o.NewWidth*dims.Height {
+		if dims.Width*o.Height > o.Width*dims.Height {
 			// constrained by width
 			if dims.Width != 0 {
-				o.NewHeight = o.NewWidth * dims.Height / dims.Width
+				opts.Height = o.Width * dims.Height / dims.Width
 			}
 		} else {
 			// constrained by height
 			if dims.Height != 0 {
-				o.NewWidth = o.NewHeight * dims.Width / dims.Height
+				opts.Width = o.Height * dims.Width / dims.Height
 			}
 		}
 
 		//opts.Embed = true
 	case ResizeModePad:
-		if o.NewWidth == 0 && o.NewHeight == 0 {
+		if o.Width == 0 && o.Height == 0 {
 			return Image{}, NewError("Missing required param: height or width", BadRequest)
 		}
 		opts.Embed = true
 	case ResizeModeScale:
-		if o.NewWidth == 0 && o.NewHeight == 0 {
+		if o.Width == 0 && o.Height == 0 {
 			return Image{}, NewError("Missing required param: height or width", BadRequest)
 		}
-	}
-
-	opts.Width = o.NewWidth
-	opts.Height = o.NewHeight
-	opts.Type = ImageType(o.Type)
-	if len(o.NewBackground) != 0 {
-		opts.Background = bimg.Color{o.NewBackground[0], o.NewBackground[1], o.NewBackground[2]}
-		opts.Extend = bimg.ExtendBackground
-	}
-	if o.NewUpscale {
-		opts.Enlarge = true
-	}
-
-	var m = map[Gravity9]bimg.Gravity{
-		Gravity9BottomCenter: bimg.GravitySouth,
-		Gravity9TopCenter:    bimg.GravityNorth,
-		Gravity9MiddleRight:  bimg.GravityEast,
-		Gravity9BottomLeft:   bimg.GravityWest,
-		Gravity9MiddleCenter: bimg.GravityCentre,
-		Gravity9Smart:        bimg.GravitySmart,
-	}
-	if g, ok := m[o.NewGravity]; ok {
-		opts.Gravity = g
-	}
-
-	opts.StripMetadata = true
-
-	if o.NewOverlayURL != "" {
-		opts.WatermarkImage.Left = o.NewOverlayX
-		opts.WatermarkImage.Top = o.NewOverlayY
-		opts.WatermarkImage.Buf = o.NewOverlayBuf
-		opts.WatermarkImage.Opacity = o.NewOverlayOpacity
 	}
 
 	return Process(buf, opts)

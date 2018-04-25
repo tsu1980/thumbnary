@@ -7,10 +7,10 @@ import (
 
 func TestImageResize(t *testing.T) {
 	opts := ImageOptions{
-		NewWidth:      300,
-		NewHeight:     300,
-		NewResizeMode: ResizeModeCrop,
-		Type:          "auto",
+		Width:        300,
+		Height:       300,
+		ResizeMode:   ResizeModeCrop,
+		OutputFormat: "auto",
 	}
 	buf, _ := ioutil.ReadAll(readFile("thumbnary.jpg"))
 
@@ -21,16 +21,16 @@ func TestImageResize(t *testing.T) {
 	if img.Mime != "image/jpeg" {
 		t.Error("Invalid image MIME type")
 	}
-	if assertSize(img.Body, opts.NewWidth, opts.NewHeight) != nil {
-		t.Errorf("Invalid image size, expected: %dx%d", opts.NewWidth, opts.NewHeight)
+	if assertSize(img.Body, opts.Width, opts.Height) != nil {
+		t.Errorf("Invalid image size, expected: %dx%d", opts.Width, opts.Height)
 	}
 }
 
 func TestImageFit(t *testing.T) {
 	opts := ImageOptions{
-		NewWidth:      300,
-		NewHeight:     300,
-		NewResizeMode: ResizeModeFit,
+		Width:      300,
+		Height:     300,
+		ResizeMode: ResizeModeFit,
 	}
 	buf, _ := ioutil.ReadAll(readFile("thumbnary.jpg"))
 
@@ -42,7 +42,7 @@ func TestImageFit(t *testing.T) {
 		t.Error("Invalid image MIME type")
 	}
 	// 550x740 -> 222x300
-	if assertSize(img.Body, 222, 300) != nil {
-		t.Errorf("Invalid image size, expected: %dx%d", opts.NewWidth, opts.NewHeight)
+	if err = assertSize(img.Body, 222, 300); err != nil {
+		t.Errorf(err.Error())
 	}
 }

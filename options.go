@@ -28,61 +28,26 @@ const (
 
 // ImageOptions represent all the supported image transformation params as first level members
 type ImageOptions struct {
-	Width         int
-	Height        int
-	AreaWidth     int
-	AreaHeight    int
-	Quality       int
-	Compression   int
-	Rotate        int
-	Top           int
-	Left          int
-	Margin        int
-	Factor        int
-	DPI           int
-	TextWidth     int
-	Flip          bool
-	Flop          bool
-	Force         bool
-	Embed         bool
-	NoCrop        bool
-	NoReplicate   bool
-	NoRotation    bool
-	NoProfile     bool
-	StripMetadata bool
-	Opacity       float32
-	Sigma         float64
-	MinAmpl       float64
-	Text          string
-	Font          string
-	Type          string
-	Color         []uint8
-	Background    []uint8
-	Extend        bimg.Extend
-	Gravity       bimg.Gravity
-	Colorspace    bimg.Interpretation
+	Width      int
+	Height     int
+	Upscale    bool
+	ResizeMode ResizeMode
+	//	Clip       []int
+	//	ClipRate   []float
+	Gravity    Gravity9
+	Background []uint8
 
-	// for new url format
-	NewWidth      int
-	NewHeight     int
-	NewUpscale    bool
-	NewResizeMode ResizeMode
-	//	NewClip       []int
-	//	NewClipRate   []float
-	NewGravity    Gravity9
-	NewBackground []uint8
+	OverlayURL     string
+	OverlayBuf     []byte
+	OverlayX       int
+	OverlayY       int
+	OverlayGravity Gravity9
+	OverlayOpacity float32
 
-	NewOverlayURL     string
-	NewOverlayBuf     []byte
-	NewOverlayX       int
-	NewOverlayY       int
-	NewOverlayGravity Gravity9
-	NewOverlayOpacity float32
+	Monochrome bool
 
-	NewMonochrome bool
-
-	NewFileType string
-	NewQuality  int
+	OutputFormat string
+	Quality      int
 }
 
 // BimgOptions creates a new bimg compatible options struct mapping the fields properly
@@ -90,31 +55,51 @@ func BimgOptions(o ImageOptions) bimg.Options {
 	opts := bimg.Options{
 		Width:          o.Width,
 		Height:         o.Height,
-		Flip:           o.Flip,
-		Flop:           o.Flop,
+		Flip:           false,
+		Flop:           false,
 		Quality:        o.Quality,
-		Compression:    o.Compression,
-		NoAutoRotate:   o.NoRotation,
-		NoProfile:      o.NoProfile,
-		Force:          o.Force,
-		Gravity:        o.Gravity,
-		Embed:          o.Embed,
-		Extend:         o.Extend,
-		Interpretation: o.Colorspace,
-		StripMetadata:  o.StripMetadata,
-		Type:           ImageType(o.Type),
-		Rotate:         bimg.Angle(o.Rotate),
+		Compression:    6,
+		NoAutoRotate:   false,
+		NoProfile:      false,
+		Force:          false,
+		Gravity:        bimg.GravityCentre,
+		Embed:          false,
+		Extend:         bimg.ExtendBlack,
+		Interpretation: bimg.InterpretationSRGB,
+		StripMetadata:  true,
+		Type:           ImageType(o.OutputFormat),
+		Rotate:         bimg.Angle(0),
 	}
 
 	if len(o.Background) != 0 {
 		opts.Background = bimg.Color{o.Background[0], o.Background[1], o.Background[2]}
+		opts.Extend = bimg.ExtendBackground
+	}
+	if o.Upscale {
+		opts.Enlarge = true
 	}
 
-	if o.Sigma > 0 || o.MinAmpl > 0 {
-		opts.GaussianBlur = bimg.GaussianBlur{
-			Sigma:   o.Sigma,
-			MinAmpl: o.MinAmpl,
-		}
+	var m = map[Gravity9]bimg.Gravity{
+		Gravity9BottomCenter: bimg.GravitySouth,
+		Gravity9TopCenter:    bimg.GravityNorth,
+		Gravity9MiddleRight:  bimg.GravityEast,
+		Gravity9BottomLeft:   bimg.GravityWest,
+		Gravity9MiddleCenter: bimg.GravityCentre,
+		Gravity9Smart:        bimg.GravitySmart,
+	}
+	if g, ok := m[o.Gravity]; ok {
+		opts.Gravity = g
+	}
+
+	if o.Monochrome {
+		opts.Interpretation = bimg.InterpretationBW
+	}
+
+	if o.OverlayURL != "" {
+		opts.WatermarkImage.Left = o.OverlayX
+		opts.WatermarkImage.Top = o.OverlayY
+		opts.WatermarkImage.Buf = o.OverlayBuf
+		opts.WatermarkImage.Opacity = o.OverlayOpacity
 	}
 
 	return opts

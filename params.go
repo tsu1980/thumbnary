@@ -11,42 +11,6 @@ import (
 )
 
 var allowedParams = map[string]string{
-	"width":       "int",
-	"height":      "int",
-	"quality":     "int",
-	"top":         "int",
-	"left":        "int",
-	"areawidth":   "int",
-	"areaheight":  "int",
-	"compression": "int",
-	"rotate":      "int",
-	"margin":      "int",
-	"factor":      "int",
-	"dpi":         "int",
-	"textwidth":   "int",
-	"opacity":     "float",
-	"flip":        "bool",
-	"flop":        "bool",
-	"nocrop":      "bool",
-	"noprofile":   "bool",
-	"norotation":  "bool",
-	"noreplicate": "bool",
-	"force":       "bool",
-	"embed":       "bool",
-	"stripmeta":   "bool",
-	"text":        "string",
-	"font":        "string",
-	"type":        "string",
-	"color":       "color",
-	"colorspace":  "colorspace",
-	"gravity":     "gravity",
-	"background":  "color",
-	"extend":      "extend",
-	"sigma":       "float",
-	"minampl":     "float",
-	"operations":  "json",
-
-	// for new url format
 	"w": "int",
 	"h": "int",
 	"u": "bool",
@@ -84,10 +48,6 @@ func readParams(inputParamsStr string) ImageOptions {
 	}
 
 	opts := mapImageParams(params)
-	opts.Type = opts.NewFileType
-	if opts.NewMonochrome {
-		opts.Colorspace = bimg.InterpretationBW
-	}
 	return opts
 }
 
@@ -103,7 +63,7 @@ func readMapParams(options map[string]interface{}) ImageOptions {
 		}
 
 		// Parse non JSON primitive types that would be represented as string types
-		if kind == "color" || kind == "colorspace" || kind == "gravity" || kind == "extend" {
+		if kind == "color" || kind == "hexcolor" || kind == "colorspace" || kind == "gravity" || kind == "gravity9" || kind == "extend" {
 			if v, ok := value.(string); ok {
 				params[key] = parseParam(v, kind)
 			}
@@ -164,53 +124,20 @@ func parseParam(param, kind string) interface{} {
 
 func mapImageParams(params map[string]interface{}) ImageOptions {
 	return ImageOptions{
-		Width:         params["width"].(int),
-		Height:        params["height"].(int),
-		Top:           params["top"].(int),
-		Left:          params["left"].(int),
-		AreaWidth:     params["areawidth"].(int),
-		AreaHeight:    params["areaheight"].(int),
-		DPI:           params["dpi"].(int),
-		Quality:       params["quality"].(int),
-		TextWidth:     params["textwidth"].(int),
-		Compression:   params["compression"].(int),
-		Rotate:        params["rotate"].(int),
-		Factor:        params["factor"].(int),
-		Color:         params["color"].([]uint8),
-		Text:          params["text"].(string),
-		Font:          params["font"].(string),
-		Type:          params["type"].(string),
-		Flip:          params["flip"].(bool),
-		Flop:          params["flop"].(bool),
-		Embed:         params["embed"].(bool),
-		NoCrop:        params["nocrop"].(bool),
-		Force:         params["force"].(bool),
-		NoReplicate:   params["noreplicate"].(bool),
-		NoRotation:    params["norotation"].(bool),
-		NoProfile:     params["noprofile"].(bool),
-		StripMetadata: params["stripmeta"].(bool),
-		Opacity:       float32(params["opacity"].(float64)),
-		Extend:        params["extend"].(bimg.Extend),
-		Gravity:       params["gravity"].(bimg.Gravity),
-		Colorspace:    params["colorspace"].(bimg.Interpretation),
-		Background:    params["background"].([]uint8),
-		Sigma:         params["sigma"].(float64),
-		MinAmpl:       params["minampl"].(float64),
-
-		NewWidth:          params["w"].(int),
-		NewHeight:         params["h"].(int),
-		NewUpscale:        params["u"].(bool),
-		NewResizeMode:     params["m"].(ResizeMode),
-		NewGravity:        params["g"].(Gravity9),
-		NewBackground:     params["b"].([]uint8),
-		NewOverlayURL:     params["l"].(string),
-		NewOverlayX:       params["lx"].(int),
-		NewOverlayY:       params["ly"].(int),
-		NewOverlayGravity: params["lg"].(Gravity9),
-		NewOverlayOpacity: float32(params["lo"].(float64)),
-		NewMonochrome:     params["mono"].(bool),
-		NewFileType:       params["f"].(string),
-		NewQuality:        params["q"].(int),
+		Width:          params["w"].(int),
+		Height:         params["h"].(int),
+		Upscale:        params["u"].(bool),
+		ResizeMode:     params["m"].(ResizeMode),
+		Gravity:        params["g"].(Gravity9),
+		Background:     params["b"].([]uint8),
+		OverlayURL:     params["l"].(string),
+		OverlayX:       params["lx"].(int),
+		OverlayY:       params["ly"].(int),
+		OverlayGravity: params["lg"].(Gravity9),
+		OverlayOpacity: float32(params["lo"].(float64)),
+		Monochrome:     params["mono"].(bool),
+		OutputFormat:   params["f"].(string),
+		Quality:        params["q"].(int),
 	}
 }
 

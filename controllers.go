@@ -116,18 +116,18 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, imgReq *Im
 
 	opts := imgReq.Options
 	vary := ""
-	if opts.Type == "auto" {
-		opts.Type = determineAcceptMimeType(r.Header.Get("Accept"))
+	if opts.OutputFormat == "auto" {
+		opts.OutputFormat = determineAcceptMimeType(r.Header.Get("Accept"))
 		vary = "Accept" // Ensure caches behave correctly for negotiated content
-	} else if opts.Type != "" && ImageType(opts.Type) == 0 {
+	} else if opts.OutputFormat != "" && ImageType(opts.OutputFormat) == 0 {
 		ErrorReply(r, w, ErrOutputFormat, o)
 		return
 	}
 
 	// Fetch overlay image if necessary
-	if opts.NewOverlayURL != "" {
+	if opts.OverlayURL != "" {
 		var overlaySource = GetHttpSource()
-		urlUnescaped, err := url.PathUnescape(opts.NewOverlayURL)
+		urlUnescaped, err := url.PathUnescape(opts.OverlayURL)
 		if err != nil {
 			ErrorReply(r, w, NewError(err.Error(), BadRequest), o)
 			return
@@ -144,7 +144,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, imgReq *Im
 			ErrorReply(r, w, NewError(err.Error(), BadRequest), o)
 			return
 		}
-		opts.NewOverlayBuf = overlayBuf
+		opts.OverlayBuf = overlayBuf
 	}
 
 	image, err := ConvertImage(buf, opts)

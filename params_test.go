@@ -9,17 +9,15 @@ import (
 const fixture = "fixtures/large.jpg"
 
 func TestReadParams(t *testing.T) {
-	str := "w=100,h=80,noreplicate=1,opacity=0.2,text=hello,b=ff0a14"
+	str := "w=100,h=80,lo=0.2,b=ff0a14"
 	params := readParams(str)
 
-	assert := params.NewWidth == 100 &&
-		params.NewHeight == 80 &&
-		params.NoReplicate == true &&
-		params.Opacity == 0.2 &&
-		params.Text == "hello" &&
-		params.NewBackground[0] == 255 &&
-		params.NewBackground[1] == 10 &&
-		params.NewBackground[2] == 20
+	assert := params.Width == 100 &&
+		params.Height == 80 &&
+		params.OverlayOpacity == 0.2 &&
+		params.Background[0] == 255 &&
+		params.Background[1] == 10 &&
+		params.Background[2] == 20
 
 	if assert == false {
 		t.Error("Invalid params")
@@ -151,10 +149,10 @@ func TestGravity(t *testing.T) {
 	}
 
 	for _, td := range cases {
-		str := "gravity=" + td.gravityValue
+		str := "g=" + td.gravityValue
 		io := readParams(str)
-		if (io.Gravity == bimg.GravitySmart) != td.smartCropValue {
-			t.Errorf("Expected %t to be %t, test data: %+v", io.Gravity == bimg.GravitySmart, td.smartCropValue, td)
+		if (io.Gravity == Gravity9Smart) != td.smartCropValue {
+			t.Errorf("Expected %t to be %t, test data: %+v", io.Gravity == Gravity9Smart, td.smartCropValue, td)
 		}
 	}
 }
@@ -166,20 +164,20 @@ func TestReadMapParams(t *testing.T) {
 	}{
 		{
 			map[string]interface{}{
-				"width":   100,
-				"opacity": 0.1,
-				"type":    "webp",
-				"embed":   true,
-				"gravity": "west",
-				"color":   "255,200,150",
+				"w":    100,
+				"lo":   0.1,
+				"f":    "webp",
+				"mono": true,
+				"g":    "4",
+				"b":    "ffc896",
 			},
 			ImageOptions{
-				Width:   100,
-				Opacity: 0.1,
-				Type:    "webp",
-				Embed:   true,
-				Gravity: bimg.GravityWest,
-				Color:   []uint8{255, 200, 150},
+				Width:          100,
+				OverlayOpacity: 0.1,
+				OutputFormat:   "webp",
+				Monochrome:     true,
+				Gravity:        Gravity9MiddleLeft,
+				Background:     []uint8{255, 200, 150},
 			},
 		},
 	}
@@ -189,20 +187,20 @@ func TestReadMapParams(t *testing.T) {
 		if opts.Width != test.expected.Width {
 			t.Errorf("Invalid width: %d != %d", opts.Width, test.expected.Width)
 		}
-		if opts.Opacity != test.expected.Opacity {
-			t.Errorf("Invalid opacity: %#v != %#v", opts.Opacity, test.expected.Opacity)
+		if opts.OverlayOpacity != test.expected.OverlayOpacity {
+			t.Errorf("Invalid overlay opacity: %#v != %#v", opts.OverlayOpacity, test.expected.OverlayOpacity)
 		}
-		if opts.Type != test.expected.Type {
-			t.Errorf("Invalid type: %s != %s", opts.Type, test.expected.Type)
+		if opts.OutputFormat != test.expected.OutputFormat {
+			t.Errorf("Invalid output format: %s != %s", opts.OutputFormat, test.expected.OutputFormat)
 		}
-		if opts.Embed != test.expected.Embed {
-			t.Errorf("Invalid embed: %#v != %#v", opts.Embed, test.expected.Embed)
+		if opts.Monochrome != test.expected.Monochrome {
+			t.Errorf("Invalid monochrome: %#v != %#v", opts.Monochrome, test.expected.Monochrome)
 		}
 		if opts.Gravity != test.expected.Gravity {
 			t.Errorf("Invalid gravity: %#v != %#v", opts.Gravity, test.expected.Gravity)
 		}
-		if opts.Color[0] != test.expected.Color[0] || opts.Color[1] != test.expected.Color[1] || opts.Color[2] != test.expected.Color[2] {
-			t.Errorf("Invalid color: %#v != %#v", opts.Color, test.expected.Color)
+		if opts.Background[0] != test.expected.Background[0] || opts.Background[1] != test.expected.Background[1] || opts.Background[2] != test.expected.Background[2] {
+			t.Errorf("Invalid background: %#v != %#v", opts.Background, test.expected.Background)
 		}
 	}
 }

@@ -297,7 +297,7 @@ func assertSize(buf []byte, width, height int) error {
 		return err
 	}
 	if size.Width != width || size.Height != height {
-		return fmt.Errorf("Invalid image size: %dx%d", size.Width, size.Height)
+		return fmt.Errorf("Invalid image size: exprected %dx%d, but actual %dx%d", width, height, size.Width, size.Height)
 	}
 	return nil
 }
