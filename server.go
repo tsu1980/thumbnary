@@ -36,32 +36,22 @@ type ServerOptions struct {
 	Authorization             string
 	Placeholder               string
 	PlaceholderImage          []byte
+	OriginRepos               OriginRepository
 }
 
-type ServerContext struct {
-	Options     ServerOptions
-	OriginId    OriginId
-	Origin      *Origin
-	OriginRepos OriginRepository
-}
-
-func NewServerContext(o ServerOptions) *ServerContext {
-	return &ServerContext{Options: o}
-}
-
-func Server(sctx *ServerContext) error {
-	addr := sctx.Options.Address + ":" + strconv.Itoa(sctx.Options.Port)
-	handler := NewLog(NewHTTPHandler(sctx), os.Stdout)
+func Server(o ServerOptions) error {
+	addr := o.Address + ":" + strconv.Itoa(o.Port)
+	handler := NewLog(NewHTTPHandler(o), os.Stdout)
 
 	server := &http.Server{
 		Addr:           addr,
 		Handler:        handler,
 		MaxHeaderBytes: 1 << 20,
-		ReadTimeout:    time.Duration(sctx.Options.HTTPReadTimeout) * time.Second,
-		WriteTimeout:   time.Duration(sctx.Options.HTTPWriteTimeout) * time.Second,
+		ReadTimeout:    time.Duration(o.HTTPReadTimeout) * time.Second,
+		WriteTimeout:   time.Duration(o.HTTPWriteTimeout) * time.Second,
 	}
 
-	return listenAndServe(server, sctx.Options)
+	return listenAndServe(server, o)
 }
 
 func listenAndServe(s *http.Server, o ServerOptions) error {
@@ -72,19 +62,19 @@ func listenAndServe(s *http.Server, o ServerOptions) error {
 }
 
 type MyHttpHandler struct {
-	ServerContext *ServerContext
+	Options ServerOptions
 }
 
-func NewHTTPHandler(sctx *ServerContext) *MyHttpHandler {
-	return &MyHttpHandler{ServerContext: sctx}
+func NewHTTPHandler(o ServerOptions) *MyHttpHandler {
+	return &MyHttpHandler{Options: o}
 }
 
 func (h *MyHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
-		Middleware(indexController, h.ServerContext.Options).ServeHTTP(w, r)
+		Middleware(indexController, h.Options).ServeHTTP(w, r)
 	} else if r.URL.Path == "/health" {
-		Middleware(healthController, h.ServerContext.Options).ServeHTTP(w, r)
+		Middleware(healthController, h.Options).ServeHTTP(w, r)
 	} else {
-		ImageMiddleware(h.ServerContext).ServeHTTP(w, r)
+		ImageMiddleware(h.Options).ServeHTTP(w, r)
 	}
 }

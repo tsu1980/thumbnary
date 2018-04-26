@@ -10,6 +10,7 @@ CREATE TABLE `origin` (
   `Scheme` char(10) NOT NULL COMMENT 'Scheme(http or https)',
   `Host` char(255) NOT NULL COMMENT 'Hostname',
   `PathPrefix` char(255) NOT NULL COMMENT 'Path prefix(starts with "/")',
+  `URLSignatureKeyEnabled` tinyint(1) NOT NULL COMMENT 'URL signature is require',
   `URLSignatureKey` char(43) NOT NULL COMMENT 'URL signature key(32 bytes base64url string)',
   `URLSignatureKey_Previous` char(43) NOT NULL COMMENT 'Previous URL signature key',
   `URLSignatureKey_Version` int(11) unsigned NOT NULL COMMENT 'URL signature key version(1 or larger)',

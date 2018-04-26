@@ -145,12 +145,13 @@ func (repo *MySQLOriginRepository) Get(originId OriginId) (*Origin, error) {
 	origin := &Origin{
 		SourceType: ImageSourceTypeHttp,
 	}
-	sql := "SELECT ID, Scheme, Host, PathPrefix, URLSignatureKey, URLSignatureKey_Previous, URLSignatureKey_Version FROM origin WHERE ID = ?"
+	sql := "SELECT ID, Scheme, Host, PathPrefix, URLSignatureKeyEnabled, URLSignatureKey, URLSignatureKey_Previous, URLSignatureKey_Version FROM origin WHERE ID = ?"
 	err := db.QueryRow(sql, (string)(originId)).Scan(
 		&origin.ID,
 		&origin.Scheme,
 		&origin.Host,
 		&origin.PathPrefix,
+		&origin.URLSignatureEnabled,
 		&origin.URLSignatureKey,
 		&origin.URLSignatureKey_Previous,
 		&origin.URLSignatureKey_Version,
@@ -158,7 +159,7 @@ func (repo *MySQLOriginRepository) Get(originId OriginId) (*Origin, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Cannot select origin id: (originId=%s) (err=%v)", originId, err)
 	}
-	log.Printf("Origin[%s] fetched\n", originId)
+	log.Printf("Origin[%s] fetched (origin=%+v)\n", originId, origin)
 	originCache.Add(originId, origin)
 	return origin, nil
 }

@@ -15,8 +15,18 @@ import (
 )
 
 type ImageRequest struct {
-	Options ImageOptions
-	Path    string
+	HTTPRequest      *http.Request
+	OriginId         OriginId
+	Origin           *Origin
+	Options          ImageOptions
+	Path             string
+	URLSignatureInfo URLSignatureInfo
+}
+
+type URLSignatureInfo struct {
+	Version      int
+	SignatureKey string
+	OriginId     OriginId
 }
 
 func indexController(w http.ResponseWriter, r *http.Request) {
@@ -37,16 +47,31 @@ func healthController(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-func imageController(sctx *ServerContext) func(http.ResponseWriter, *http.Request) {
+func imageController(o ServerOptions) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		imageHandler(w, req, sctx)
+		imgReq := &ImageRequest{HTTPRequest: req}
+
+		var err error
+		imgReq.URLSignatureInfo, err = parseURLSignature(req)
+		if err != nil {
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
+			return
+		}
+
+		_, err = FindOrigin(imgReq, o)
+		if err != nil {
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
+			return
+		}
+
+		imageHandler(w, req, imgReq, o)
 	}
 }
 
-func imageHandler(w http.ResponseWriter, req *http.Request, sctx *ServerContext) {
-	imageSource := imageSourceMap[sctx.Origin.SourceType]
+func imageHandler(w http.ResponseWriter, req *http.Request, imgReq *ImageRequest, o ServerOptions) {
+	imageSource := imageSourceMap[imgReq.Origin.SourceType]
 	if imageSource == nil {
-		ErrorReply(req, w, ErrMissingImageSource, sctx.Options)
+		ErrorReply(req, w, ErrMissingImageSource, o)
 		return
 	}
 
@@ -54,23 +79,22 @@ func imageHandler(w http.ResponseWriter, req *http.Request, sctx *ServerContext)
 	values := r.FindStringSubmatch(req.URL.EscapedPath())
 	if values == nil {
 		err := fmt.Errorf("Bad URL format: %s", req.URL.EscapedPath())
-		ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
+		ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
 		return
 	}
 
-	imgReq := &ImageRequest{}
 	imgReq.Options = readParams(values[1])
 	//log.Printf("readParams: %#v\n", imgReq.Options)
 	imgReq.Path = values[2]
 
-	buf, err := imageSource.GetImage(req, sctx.Origin, imgReq.Path)
+	buf, err := imageSource.GetImage(req, imgReq.Origin, imgReq.Path)
 	if err != nil {
-		ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
+		ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
 		return
 	}
 
 	if len(buf) == 0 {
-		ErrorReply(req, w, ErrEmptyBody, sctx.Options)
+		ErrorReply(req, w, ErrEmptyBody, o)
 		return
 	}
 
@@ -94,7 +118,7 @@ func imageHandler(w http.ResponseWriter, req *http.Request, sctx *ServerContext)
 
 	// Finally check if image MIME type is supported
 	if IsImageMimeTypeSupported(mimeType) == false {
-		ErrorReply(req, w, ErrUnsupportedMedia, sctx.Options)
+		ErrorReply(req, w, ErrUnsupportedMedia, o)
 		return
 	}
 
@@ -104,7 +128,7 @@ func imageHandler(w http.ResponseWriter, req *http.Request, sctx *ServerContext)
 		opts.OutputFormat = determineAcceptMimeType(req.Header.Get("Accept"))
 		vary = "Accept" // Ensure caches behave correctly for negotiated content
 	} else if opts.OutputFormat != "" && ImageType(opts.OutputFormat) == 0 {
-		ErrorReply(req, w, ErrOutputFormat, sctx.Options)
+		ErrorReply(req, w, ErrOutputFormat, o)
 		return
 	}
 
@@ -113,19 +137,19 @@ func imageHandler(w http.ResponseWriter, req *http.Request, sctx *ServerContext)
 		var overlaySource = GetHttpSource()
 		urlUnescaped, err := url.PathUnescape(opts.OverlayURL)
 		if err != nil {
-			ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
 			return
 		}
 		url, err := url.Parse(urlUnescaped)
 		if err != nil {
-			ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
 			return
 		}
 
 		//log.Printf("fetchImage overlay image: %#v", url.String())
 		overlayBuf, err := overlaySource.fetchImage(url, req)
 		if err != nil {
-			ErrorReply(req, w, NewError(err.Error(), BadRequest), sctx.Options)
+			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
 			return
 		}
 		opts.OverlayBuf = overlayBuf
@@ -137,7 +161,7 @@ func imageHandler(w http.ResponseWriter, req *http.Request, sctx *ServerContext)
 	}
 	image, err := imageFunc(buf, opts)
 	if err != nil {
-		ErrorReply(req, w, NewError("Error while processing the image: "+err.Error(), BadRequest), sctx.Options)
+		ErrorReply(req, w, NewError("Error while processing the image: "+err.Error(), BadRequest), o)
 		return
 	}
 
@@ -152,6 +176,36 @@ func imageHandler(w http.ResponseWriter, req *http.Request, sctx *ServerContext)
 		}
 		w.Write(image.Body)
 	}
+}
+
+func parseURLSignature(req *http.Request) (URLSignatureInfo, error) {
+	sigVal := req.URL.Query().Get("sig")
+	if sigVal == "" {
+		return URLSignatureInfo{}, nil
+	}
+
+	// parse URL signature string
+	r := regexp.MustCompile(`([a-z0-9]+-)?(\d+)\.([A-Za-z0-9-_=]+)`)
+	m := r.FindStringSubmatch(sigVal)
+	mlen := len(m)
+	if m == nil || (mlen != 4 && mlen != 3) {
+		return URLSignatureInfo{}, fmt.Errorf("Bad URL signature format: %s", sigVal)
+	}
+
+	sigInfo := URLSignatureInfo{}
+
+	if mlen == 4 {
+		d, _ := strconv.Atoi(m[2])
+		sigInfo.Version = d
+		sigInfo.SignatureKey = m[3]
+		sigInfo.OriginId = OriginId(strings.TrimSuffix(m[1], "-"))
+	} else {
+		d, _ := strconv.Atoi(m[1])
+		sigInfo.Version = d
+		sigInfo.SignatureKey = m[2]
+	}
+
+	return sigInfo, nil
 }
 
 func determineAcceptMimeType(accept string) string {

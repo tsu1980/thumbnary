@@ -43,13 +43,13 @@ func TestCrop(t *testing.T) {
 	opts := ServerOptions{
 		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
 	}
-	sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
 		w.Write(buf)
 	}))
 	defer td()
 
-	fn := ImageMiddleware(sctx)
+	fn := ImageMiddleware(opts)
 	ts := httptest.NewServer(fn)
 	url := ts.URL + "/c!/w=300/testdata/large.jpg?oid=qic0bfzg"
 	defer ts.Close()
@@ -88,13 +88,13 @@ func TestFit(t *testing.T) {
 	opts := ServerOptions{
 		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
 	}
-	sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
 		w.Write(buf)
 	}))
 	defer td()
 
-	fn := ImageMiddleware(sctx)
+	fn := ImageMiddleware(opts)
 	ts := httptest.NewServer(fn)
 	url := ts.URL + "/c!/w=300,h=300,m=fit/testdata/large.jpg?oid=qic0bfzg"
 	defer ts.Close()
@@ -141,13 +141,13 @@ func TestTypeAuto(t *testing.T) {
 		opts := ServerOptions{
 			OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
 		}
-		sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			buf, _ := ioutil.ReadFile("testdata/large.jpg")
 			w.Write(buf)
 		}))
 		defer td()
 
-		fn := ImageMiddleware(sctx)
+		fn := ImageMiddleware(opts)
 		ts := httptest.NewServer(fn)
 		url := ts.URL + "/c!/w=300,f=auto/testdata/large.jpg?oid=qic0bfzg"
 		defer ts.Close()
@@ -190,9 +190,7 @@ func TestTypeAuto(t *testing.T) {
 	}
 }
 
-func setupTestSourceServer(opts ServerOptions, httpFunc http.HandlerFunc) (*ServerContext, func()) {
-	sctx := NewServerContext(opts)
-
+func setupTestSourceServer(opts ServerOptions, httpFunc http.HandlerFunc) (ServerOptions, func()) {
 	LoadSources(opts)
 
 	tsImage := httptest.NewServer(httpFunc)
@@ -209,9 +207,9 @@ func setupTestSourceServer(opts ServerOptions, httpFunc http.HandlerFunc) (*Serv
 			URLSignatureKey: "zdA7VAsZUwZJqg4u",
 		},
 	}
-	sctx.OriginRepos = NewMockOriginRepository(originMap)
+	opts.OriginRepos = NewMockOriginRepository(originMap)
 
-	return sctx, func() {
+	return opts, func() {
 		tsImage.Close()
 	}
 }
@@ -220,13 +218,13 @@ func TestRemoteHTTPSource(t *testing.T) {
 	opts := ServerOptions{
 		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
 	}
-	sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
 		w.Write(buf)
 	}))
 	defer td()
 
-	fn := ImageMiddleware(sctx)
+	fn := ImageMiddleware(opts)
 	ts := httptest.NewServer(fn)
 	url := ts.URL + "/c!/w=200,h=200/testdata/large.jpg?oid=qic0bfzg"
 	defer ts.Close()
@@ -261,12 +259,12 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 	opts := ServerOptions{
 		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
 	}
-	sctx, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(400)
 	}))
 	defer td()
 
-	fn := ImageMiddleware(sctx)
+	fn := ImageMiddleware(opts)
 	LoadSources(opts)
 
 	ts := httptest.NewServer(fn)

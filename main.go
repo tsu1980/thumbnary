@@ -139,8 +139,6 @@ func main() {
 		MaxAllowedSize:            *aMaxAllowedSize,
 	}
 
-	sctx := NewServerContext(opts)
-
 	// Create a memory release goroutine
 	if *aMRelease > 0 {
 		memoryRelease(*aMRelease)
@@ -152,7 +150,7 @@ func main() {
 	}
 
 	// Parse origin id detect methods
-	err := parseOriginIdDetectMethods(sctx, *aOriginIdDetectMethods)
+	err := parseOriginIdDetectMethods(&opts, *aOriginIdDetectMethods)
 	if err != nil {
 		exitWithError(err.Error())
 	}
@@ -196,18 +194,18 @@ func main() {
 	LoadSources(opts)
 
 	// Create and open origin repository
-	sctx.OriginRepos, err = NewOriginRepository(OriginRepositoryTypeMySQL, opts)
+	opts.OriginRepos, err = NewOriginRepository(OriginRepositoryTypeMySQL, opts)
 	if err != nil {
 		exitWithError("failed to create origin repository: %s", err.Error())
 	}
 
-	err = sctx.OriginRepos.Open()
+	err = opts.OriginRepos.Open()
 	if err != nil {
 		exitWithError("failed to open origin repository: %s", err.Error())
 	}
 
 	// Start the server
-	err = Server(sctx)
+	err = Server(opts)
 	if err != nil {
 		exitWithError("cannot start the server: %s", err)
 	}
@@ -270,7 +268,7 @@ func parseOrigins(origins string) []*url.URL {
 	return urls
 }
 
-func parseOriginIdDetectMethods(sctx *ServerContext, input string) error {
+func parseOriginIdDetectMethods(o *ServerOptions, input string) error {
 	methods := make([]OriginIdDetectMethod, 0, 5)
 	for _, val := range strings.Split(input, ",") {
 		val = strings.ToLower(strings.TrimSpace(val))
@@ -282,11 +280,11 @@ func parseOriginIdDetectMethods(sctx *ServerContext, input string) error {
 
 		switch method {
 		case OriginIdDetectMethod_Host:
-			if sctx.Options.OriginIdDetectHostPattern == "" {
+			if o.OriginIdDetectHostPattern == "" {
 				return fmt.Errorf("Missing required params: origin id detect host pattern")
 			}
 		case OriginIdDetectMethod_Path:
-			if sctx.Options.OriginIdDetectPathPattern == "" {
+			if o.OriginIdDetectPathPattern == "" {
 				return fmt.Errorf("Missing required params: origin id detect path pattern")
 			}
 		}
@@ -298,7 +296,7 @@ func parseOriginIdDetectMethods(sctx *ServerContext, input string) error {
 		return fmt.Errorf("origin id detect methods empty")
 	}
 
-	sctx.Options.OriginIdDetectMethods = methods
+	o.OriginIdDetectMethods = methods
 	return nil
 }
 

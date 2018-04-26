@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"net/http"
 	"regexp"
 )
 
@@ -16,6 +15,7 @@ type Origin struct {
 	Scheme                   string
 	Host                     string
 	PathPrefix               string
+	URLSignatureEnabled      bool
 	URLSignatureKey          string
 	URLSignatureKey_Previous string
 	URLSignatureKey_Version  string
@@ -37,7 +37,7 @@ func NewOriginRepository(ort OriginRepositoryType, o ServerOptions) (OriginRepos
 }
 
 type OriginIdDetectMethod string
-type OriginIdDetectFunc func(*ServerContext, *http.Request) (OriginId, error)
+type OriginIdDetectFunc func(ServerOptions, *ImageRequest) (OriginId, error)
 
 const OriginIdDetectMethod_Host OriginIdDetectMethod = "host"
 const OriginIdDetectMethod_Path OriginIdDetectMethod = "path"
@@ -49,13 +49,13 @@ const OriginIdHTTPHeaderName string = "X-THUMBNARY-ORIGIN-ID"
 
 var originIdDetectMethodMap = make(map[OriginIdDetectMethod]OriginIdDetectFunc)
 
-func OriginIdDetectFunc_Host(sctx *ServerContext, req *http.Request) (OriginId, error) {
-	host, _, err := net.SplitHostPort(req.Host)
+func OriginIdDetectFunc_Host(o ServerOptions, imgReq *ImageRequest) (OriginId, error) {
+	host, _, err := net.SplitHostPort(imgReq.HTTPRequest.Host)
 	if err != nil {
-		host = req.Host
+		host = imgReq.HTTPRequest.Host
 	}
 
-	r := regexp.MustCompile(sctx.Options.OriginIdDetectHostPattern)
+	r := regexp.MustCompile(o.OriginIdDetectHostPattern)
 	group := r.FindStringSubmatch(host)
 	if group == nil {
 		return "", fmt.Errorf("Cannot extract origin id: (host=%s)", host)
@@ -69,61 +69,64 @@ func OriginIdDetectFunc_Host(sctx *ServerContext, req *http.Request) (OriginId, 
 	return originId, nil
 }
 
-func OriginIdDetectFunc_Path(sctx *ServerContext, req *http.Request) (OriginId, error) {
-	r := regexp.MustCompile(sctx.Options.OriginIdDetectPathPattern)
-	group := r.FindStringSubmatch(req.URL.Path)
+func OriginIdDetectFunc_Path(o ServerOptions, imgReq *ImageRequest) (OriginId, error) {
+	r := regexp.MustCompile(o.OriginIdDetectPathPattern)
+	group := r.FindStringSubmatch(imgReq.HTTPRequest.URL.Path)
 	if group == nil {
-		return "", fmt.Errorf("Cannot extract origin id: (path=%s)", req.URL.Path)
+		return "", fmt.Errorf("Cannot extract origin id: (path=%s)", imgReq.HTTPRequest.URL.Path)
 	}
 
 	var originId = OriginId(group[1])
 	if originId == "" {
-		return "", fmt.Errorf("Origin id is empty: (path=%s)", req.URL.Path)
+		return "", fmt.Errorf("Origin id is empty: (path=%s)", imgReq.HTTPRequest.URL.Path)
 	}
 
 	return originId, nil
 }
 
-func OriginIdDetectFunc_Query(sctx *ServerContext, req *http.Request) (OriginId, error) {
-	originId := req.URL.Query().Get("oid")
+func OriginIdDetectFunc_Query(o ServerOptions, imgReq *ImageRequest) (OriginId, error) {
+	originId := imgReq.HTTPRequest.URL.Query().Get("oid")
 	if originId == "" {
-		return "", fmt.Errorf("oid query string not specified: (URL=%s)", req.URL.String())
+		return "", fmt.Errorf("oid query string not specified: (URL=%s)", imgReq.HTTPRequest.URL.String())
 	}
 	return (OriginId)(originId), nil
 }
 
-func OriginIdDetectFunc_Header(sctx *ServerContext, req *http.Request) (OriginId, error) {
-	originId := req.Header.Get(OriginIdHTTPHeaderName)
+func OriginIdDetectFunc_Header(o ServerOptions, imgReq *ImageRequest) (OriginId, error) {
+	originId := imgReq.HTTPRequest.Header.Get(OriginIdHTTPHeaderName)
 	if originId == "" {
-		return "", fmt.Errorf("oid query not specified: (Header=%+v)", req.Header)
+		return "", fmt.Errorf("Origin id in HTTP header is not specified: (Header=%+v)", imgReq.HTTPRequest.Header)
 	}
 	return (OriginId)(originId), nil
 }
 
-func OriginIdDetectFunc_URLSignature(sctx *ServerContext, req *http.Request) (OriginId, error) {
-	return "", fmt.Errorf("Not implemented yet")
+func OriginIdDetectFunc_URLSignature(o ServerOptions, imgReq *ImageRequest) (OriginId, error) {
+	if imgReq.URLSignatureInfo.OriginId == "" {
+		return "", fmt.Errorf("Origin id in URL signature is not specified: (URL=%s)", imgReq.HTTPRequest.URL.String())
+	}
+	return imgReq.URLSignatureInfo.OriginId, nil
 }
 
-func FindOrigin(sctx *ServerContext, req *http.Request) (*Origin, error) {
-	for _, method := range sctx.Options.OriginIdDetectMethods {
+func FindOrigin(imgReq *ImageRequest, o ServerOptions) (*Origin, error) {
+	for _, method := range o.OriginIdDetectMethods {
 		methodFunc, _ := originIdDetectMethodMap[method]
 
-		originId, _ := methodFunc(sctx, req)
+		originId, _ := methodFunc(o, imgReq)
 		if originId != "" {
 			//log.Printf("Origin id is %s", (string)(originId))
 
-			origin, err := sctx.OriginRepos.Get(originId)
+			origin, err := o.OriginRepos.Get(originId)
 			if err != nil {
 				return nil, err
 			}
 
-			sctx.OriginId = originId
-			sctx.Origin = origin
+			imgReq.OriginId = originId
+			imgReq.Origin = origin
 			return origin, nil
 		}
 	}
 
-	return nil, fmt.Errorf("Cannot detect origin id: (methods=%+v) (req=%+v)", sctx.Options.OriginIdDetectMethods, req)
+	return nil, fmt.Errorf("Cannot detect origin id: (methods=%+v) (req=%+v)", o.OriginIdDetectMethods, imgReq)
 }
 
 func init() {
