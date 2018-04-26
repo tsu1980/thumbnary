@@ -19,7 +19,6 @@ type ServerOptions struct {
 	AuthForwarding            bool
 	EnablePlaceholder         bool
 	EnableURLSignature        bool
-	EnableOrigin              bool
 	OriginIdDetectMethods     []OriginIdDetectMethod
 	OriginIdDetectHostPattern string
 	OriginIdDetectPathPattern string

@@ -25,8 +25,6 @@ var (
 	aCors                      = flag.Bool("cors", false, "Enable CORS support")
 	aAuthForwarding            = flag.Bool("enable-auth-forwarding", false, "Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors")
 	aEnablePlaceholder         = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error")
-	aEnableURLSignature        = flag.Bool("enable-url-signature", false, "Enable URL signature (URL-safe Base64-encoded HMAC digest)")
-	aEnableOrigin              = flag.Bool("enable-origin", false, "Enable Origin future(with http source only)")
 	aOriginIdDetectMethods     = flag.String("origin-id-detect-methods", "header,query", "List of origin id detect methods(Comma separated)")
 	aOriginIdDetectHostPattern = flag.String("origin-id-detect-host-pattern", "", "The regex pattern string for extract origin id from host name")
 	aOriginIdDetectPathPattern = flag.String("origin-id-detect-path-pattern", "", "The regex pattern string for extract origin id from url path")
@@ -34,8 +32,6 @@ var (
 	aRedisChannelPrefix        = flag.String("redis-channel-prefix", "imarginary:", "The channel name for notification")
 	aDBDriverName              = flag.String("db-driver-name", "", "The database driver name")
 	aDBDataSourceName          = flag.String("db-data-source-name", "", "The database data source name")
-	aURLSignatureKey           = flag.String("url-signature-key", "", "The URL signature key (32 characters minimum)")
-	aURLSignatureSalt          = flag.String("url-signature-salt", "", "The URL signature salt (32 characters minimum)")
 	aMaxAllowedSize            = flag.Int("max-allowed-size", 0, "Restrict maximum size of http image source (in bytes)")
 	aKey                       = flag.String("key", "", "Define API key for authorization")
 	aCertFile                  = flag.String("certfile", "", "TLS certificate file path")
@@ -89,11 +85,6 @@ Options:
   -mrelease <num>           OS memory release interval in seconds [default: 30]
 `
 
-type URLSignature struct {
-	Key  string
-	Salt string
-}
-
 func main() {
 	flag.Usage = func() {
 		fmt.Fprint(os.Stderr, fmt.Sprintf(usage, Version))
@@ -108,7 +99,6 @@ func main() {
 	}
 
 	port := getPort(*aPort)
-	urlSignature := getURLSignature(*aURLSignatureKey, *aURLSignatureSalt)
 
 	opts := ServerOptions{
 		Port:                      port,
@@ -116,16 +106,12 @@ func main() {
 		CORS:                      *aCors,
 		AuthForwarding:            *aAuthForwarding,
 		EnablePlaceholder:         *aEnablePlaceholder,
-		EnableURLSignature:        *aEnableURLSignature,
-		EnableOrigin:              *aEnableOrigin,
 		OriginIdDetectHostPattern: *aOriginIdDetectHostPattern,
 		OriginIdDetectPathPattern: *aOriginIdDetectPathPattern,
 		RedisURL:                  *aRedisURL,
 		RedisChannelPrefix:        *aRedisChannelPrefix,
 		DBDriverName:              *aDBDriverName,
 		DBDataSourceName:          *aDBDataSourceName,
-		URLSignatureKey:           urlSignature.Key,
-		URLSignatureSalt:          urlSignature.Salt,
 		APIKey:                    *aKey,
 		Concurrency:               *aConcurrency,
 		Burst:                     *aBurst,
@@ -173,21 +159,6 @@ func main() {
 		opts.PlaceholderImage = placeholder
 	}
 
-	// Check URL signature key and salt, if required
-	if *aEnableURLSignature == true {
-		if urlSignature.Key == "" || urlSignature.Salt == "" {
-			exitWithError("URL signature key and salt are required")
-		}
-
-		if len(urlSignature.Key) < 32 {
-			exitWithError("URL signature key must be a minimum of 32 characters")
-		}
-
-		if len(urlSignature.Salt) < 32 {
-			exitWithError("URL signature salt must be a minimum of 32 characters")
-		}
-	}
-
 	debug("thumbnary server listening on port :%d", opts.Port)
 
 	// Load image source providers
@@ -219,18 +190,6 @@ func getPort(port int) int {
 		}
 	}
 	return port
-}
-
-func getURLSignature(key string, salt string) URLSignature {
-	if keyEnv := os.Getenv("URL_SIGNATURE_KEY"); keyEnv != "" {
-		key = keyEnv
-	}
-
-	if saltEnv := os.Getenv("URL_SIGNATURE_SALT"); saltEnv != "" {
-		salt = saltEnv
-	}
-
-	return URLSignature{key, salt}
 }
 
 func showUsage() {
