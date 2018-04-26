@@ -18,7 +18,7 @@ type Origin struct {
 	URLSignatureEnabled      bool
 	URLSignatureKey          string
 	URLSignatureKey_Previous string
-	URLSignatureKey_Version  string
+	URLSignatureKey_Version  int
 }
 
 type OriginRepository interface {

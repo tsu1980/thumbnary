@@ -1,9 +1,6 @@
 package main
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
@@ -123,33 +120,4 @@ func getCacheControl(ttl int) string {
 
 func isPublicPath(path string) bool {
 	return path == "/" || path == "/health"
-}
-
-func validateURLSignature(next http.Handler, o ServerOptions) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Retrieve and remove URL signature from request parameters
-		query := r.URL.Query()
-		sign := query.Get("sign")
-		query.Del("sign")
-
-		// Compute expected URL signature
-		h := hmac.New(sha256.New, []byte(o.URLSignatureKey))
-		h.Write([]byte(r.URL.Path))
-		h.Write([]byte(query.Encode()))
-		h.Write([]byte(o.URLSignatureSalt))
-		expectedSign := h.Sum(nil)
-
-		urlSign, err := base64.RawURLEncoding.DecodeString(sign)
-		if err != nil {
-			ErrorReply(r, w, ErrInvalidURLSignature, o)
-			return
-		}
-
-		if hmac.Equal(urlSign, expectedSign) == false {
-			ErrorReply(r, w, ErrURLSignatureMismatch, o)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
 }

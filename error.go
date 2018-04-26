@@ -35,6 +35,7 @@ var (
 	ErrNotImplemented       = NewError("Not implemented endpoint", NotImplemented)
 	ErrInvalidURLSignature  = NewError("Invalid URL signature", BadRequest)
 	ErrURLSignatureMismatch = NewError("URL signature mismatch", Forbidden)
+	ErrURLSignatureExpired  = NewError("URL signature expired", Forbidden)
 )
 
 type Error struct {

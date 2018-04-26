@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"mime"
@@ -19,14 +22,14 @@ type ImageRequest struct {
 	OriginId         OriginId
 	Origin           *Origin
 	Options          ImageOptions
-	Path             string
+	RelativeFilePath string
 	URLSignatureInfo URLSignatureInfo
 }
 
 type URLSignatureInfo struct {
-	Version      int
-	SignatureKey string
-	OriginId     OriginId
+	Version        int
+	SignatureValue string
+	OriginId       OriginId
 }
 
 func indexController(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +67,14 @@ func imageController(o ServerOptions) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
+		if imgReq.Origin.URLSignatureEnabled {
+			err2 := validateURLSignature(imgReq)
+			if err2 != nil {
+				ErrorReply(req, w, *err2, o)
+				return
+			}
+		}
+
 		imageHandler(w, req, imgReq, o)
 	}
 }
@@ -85,9 +96,9 @@ func imageHandler(w http.ResponseWriter, req *http.Request, imgReq *ImageRequest
 
 	imgReq.Options = readParams(values[1])
 	//log.Printf("readParams: %#v\n", imgReq.Options)
-	imgReq.Path = values[2]
+	imgReq.RelativeFilePath = values[2]
 
-	buf, err := imageSource.GetImage(req, imgReq.Origin, imgReq.Path)
+	buf, err := imageSource.GetImage(req, imgReq.Origin, imgReq.RelativeFilePath)
 	if err != nil {
 		ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
 		return
@@ -178,6 +189,33 @@ func imageHandler(w http.ResponseWriter, req *http.Request, imgReq *ImageRequest
 	}
 }
 
+// version := "1"
+// value := BASE64URL(HMAC-SHA-256(SigningKey, Path))
+// originID := "ks8vm" + "-"	// Optional
+// signature := originID + version + "." + value
+//
+// CreateURLSignatureString(1, "/c!/w=300/testdata/large.jpg", "secrettext", "")
+func CreateURLSignatureString(version int, path string, key string, originId OriginId) string {
+	var b strings.Builder
+
+	if originId != "" {
+		b.WriteString(string(originId) + "-")
+	}
+
+	b.WriteString(strconv.Itoa(version) + ".")
+
+	sigVal := CalcURLSignatureValue(path, key)
+	b.WriteString(sigVal)
+
+	return b.String()
+}
+
+func CalcURLSignatureValue(path string, key string) string {
+	mac := hmac.New(sha256.New, []byte(key))
+	mac.Write([]byte(path))
+	return base64.URLEncoding.EncodeToString(mac.Sum(nil))
+}
+
 func parseURLSignature(req *http.Request) (URLSignatureInfo, error) {
 	sigVal := req.URL.Query().Get("sig")
 	if sigVal == "" {
@@ -197,15 +235,38 @@ func parseURLSignature(req *http.Request) (URLSignatureInfo, error) {
 	if mlen == 4 {
 		d, _ := strconv.Atoi(m[2])
 		sigInfo.Version = d
-		sigInfo.SignatureKey = m[3]
+		sigInfo.SignatureValue = m[3]
 		sigInfo.OriginId = OriginId(strings.TrimSuffix(m[1], "-"))
 	} else {
 		d, _ := strconv.Atoi(m[1])
 		sigInfo.Version = d
-		sigInfo.SignatureKey = m[2]
+		sigInfo.SignatureValue = m[2]
 	}
 
 	return sigInfo, nil
+}
+
+func validateURLSignature(imgReq *ImageRequest) *Error {
+	if imgReq.URLSignatureInfo.Version < 1 || imgReq.URLSignatureInfo.SignatureValue == "" {
+		return &ErrInvalidURLSignature
+	}
+
+	// Compute expected URL signature
+	var sigKey string
+	if imgReq.URLSignatureInfo.Version == imgReq.Origin.URLSignatureKey_Version {
+		sigKey = imgReq.Origin.URLSignatureKey
+	} else if imgReq.URLSignatureInfo.Version == (imgReq.Origin.URLSignatureKey_Version - 1) {
+		sigKey = imgReq.Origin.URLSignatureKey_Previous
+	} else {
+		return &ErrURLSignatureExpired
+	}
+	sigValExpected := CalcURLSignatureValue(imgReq.HTTPRequest.URL.EscapedPath(), sigKey)
+
+	if strings.Compare(imgReq.URLSignatureInfo.SignatureValue, sigValExpected) != 0 {
+		return &ErrURLSignatureMismatch
+	}
+
+	return nil
 }
 
 func determineAcceptMimeType(accept string) string {

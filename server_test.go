@@ -199,12 +199,32 @@ func setupTestSourceServer(opts ServerOptions, httpFunc http.HandlerFunc) (Serve
 
 	originMap := map[OriginId]*Origin{
 		"qic0bfzg": &Origin{
-			ID:              "qic0bfzg",
-			SourceType:      ImageSourceTypeHttp,
-			Scheme:          tsImageURL.Scheme,
-			Host:            tsImageURL.Host,
-			PathPrefix:      "/",
-			URLSignatureKey: "zdA7VAsZUwZJqg4u",
+			ID:         "qic0bfzg",
+			SourceType: ImageSourceTypeHttp,
+			Scheme:     tsImageURL.Scheme,
+			Host:       tsImageURL.Host,
+			PathPrefix: "/",
+		},
+		"jdv9ab8v": &Origin{
+			ID:                      "jdv9ab8v",
+			SourceType:              ImageSourceTypeHttp,
+			Scheme:                  tsImageURL.Scheme,
+			Host:                    tsImageURL.Host,
+			PathPrefix:              "/",
+			URLSignatureEnabled:     true,
+			URLSignatureKey:         "secrettest",
+			URLSignatureKey_Version: 1,
+		},
+		"sigver2": &Origin{
+			ID:                       "sigver2",
+			SourceType:               ImageSourceTypeHttp,
+			Scheme:                   tsImageURL.Scheme,
+			Host:                     tsImageURL.Host,
+			PathPrefix:               "/",
+			URLSignatureEnabled:      true,
+			URLSignatureKey:          "secrettestnew",
+			URLSignatureKey_Previous: "secrettest",
+			URLSignatureKey_Version:  2,
 		},
 	}
 	opts.OriginRepos = NewMockOriginRepository(originMap)
@@ -277,6 +297,147 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 	}
 	if res.StatusCode != 400 {
 		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+	}
+}
+
+func TestURLSignature(t *testing.T) {
+	opts := ServerOptions{
+		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+	}
+	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		buf, _ := ioutil.ReadFile("testdata/large.jpg")
+		w.Write(buf)
+	}))
+	defer td()
+
+	fn := ImageMiddleware(opts)
+	ts := httptest.NewServer(fn)
+	path := "/c!/w=300/testdata/large.jpg"
+	sig := CreateURLSignatureString(1, path, "secrettest", "")
+	url := ts.URL + path + "?oid=jdv9ab8v" + "&sig=" + sig
+	defer ts.Close()
+
+	res, err := http.Get(url)
+	if err != nil {
+		t.Fatal("Cannot perform the request")
+	}
+	if res.StatusCode != 200 {
+		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+	}
+
+	if res.Header.Get("Content-Length") == "" {
+		t.Fatal("Empty content length response")
+	}
+
+	image, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(image) == 0 {
+		t.Fatalf("Empty response body")
+	}
+
+	err = assertSize(image, 300, 1080)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if bimg.DetermineImageTypeName(image) != "jpeg" {
+		t.Fatalf("Invalid image type")
+	}
+}
+
+func TestURLSignatureVersion2(t *testing.T) {
+	opts := ServerOptions{
+		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+	}
+	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		buf, _ := ioutil.ReadFile("testdata/large.jpg")
+		w.Write(buf)
+	}))
+	defer td()
+
+	fn := ImageMiddleware(opts)
+	ts := httptest.NewServer(fn)
+	path := "/c!/w=300/testdata/large.jpg"
+	sig := CreateURLSignatureString(2, path, "secrettestnew", "")
+	url := ts.URL + path + "?oid=sigver2" + "&sig=" + sig
+	defer ts.Close()
+
+	res, err := http.Get(url)
+	if err != nil {
+		t.Fatal("Cannot perform the request")
+	}
+	if res.StatusCode != 200 {
+		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+	}
+
+	if res.Header.Get("Content-Length") == "" {
+		t.Fatal("Empty content length response")
+	}
+
+	image, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(image) == 0 {
+		t.Fatalf("Empty response body")
+	}
+
+	err = assertSize(image, 300, 1080)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if bimg.DetermineImageTypeName(image) != "jpeg" {
+		t.Fatalf("Invalid image type")
+	}
+}
+
+func TestURLSignatureVersion2Previous(t *testing.T) {
+	opts := ServerOptions{
+		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+	}
+	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		buf, _ := ioutil.ReadFile("testdata/large.jpg")
+		w.Write(buf)
+	}))
+	defer td()
+
+	fn := ImageMiddleware(opts)
+	ts := httptest.NewServer(fn)
+	path := "/c!/w=300/testdata/large.jpg"
+	sig := CreateURLSignatureString(1, path, "secrettest", "")
+	url := ts.URL + path + "?oid=sigver2" + "&sig=" + sig
+	defer ts.Close()
+
+	res, err := http.Get(url)
+	if err != nil {
+		t.Fatal("Cannot perform the request")
+	}
+	if res.StatusCode != 200 {
+		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+	}
+
+	if res.Header.Get("Content-Length") == "" {
+		t.Fatal("Empty content length response")
+	}
+
+	image, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(image) == 0 {
+		t.Fatalf("Empty response body")
+	}
+
+	err = assertSize(image, 300, 1080)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if bimg.DetermineImageTypeName(image) != "jpeg" {
+		t.Fatalf("Invalid image type")
 	}
 }
 
