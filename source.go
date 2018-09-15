@@ -2,7 +2,10 @@ package main
 
 import "net/http"
 
-type ImageSourceType string
+type ImageSourceType int
+
+const ImageSourceTypeHttp ImageSourceType = 0
+
 type ImageSourceFactoryFunction func(*SourceConfig) ImageSource
 
 type SourceConfig struct {

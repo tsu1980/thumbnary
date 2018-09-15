@@ -9,8 +9,6 @@ import (
 	"strconv"
 )
 
-const ImageSourceTypeHttp ImageSourceType = "http"
-
 type HttpImageSource struct {
 	Config *SourceConfig
 }

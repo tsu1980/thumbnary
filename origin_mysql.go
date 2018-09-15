@@ -142,12 +142,11 @@ func (repo *MySQLOriginRepository) Get(originId OriginId) (*Origin, error) {
 		}
 	}
 
-	origin := &Origin{
-		SourceType: ImageSourceTypeHttp,
-	}
+	origin := &Origin{}
 	sql := "SELECT ID, Scheme, Host, PathPrefix, URLSignatureKeyEnabled, URLSignatureKey, URLSignatureKey_Previous, URLSignatureKey_Version FROM origin WHERE ID = ?"
 	err := db.QueryRow(sql, (string)(originId)).Scan(
 		&origin.ID,
+		&origin.SourceType,
 		&origin.Scheme,
 		&origin.Host,
 		&origin.PathPrefix,

@@ -7,6 +7,7 @@ USE `thumbnary`;
 DROP TABLE IF EXISTS `origin`;
 CREATE TABLE `origin` (
   `ID` char(8) NOT NULL COMMENT '8 bytes random string composed of alphanumeric characters. Use as subdomain(No digits only name)',
+  `SourceType` int(11) NOT NULL COMMENT 'Source type(1=http)',
   `Scheme` char(10) NOT NULL COMMENT 'Scheme(http or https)',
   `Host` char(255) NOT NULL COMMENT 'Hostname',
   `PathPrefix` char(255) NOT NULL COMMENT 'Path prefix(starts with "/")',
