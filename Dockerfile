@@ -64,6 +64,8 @@ WORKDIR $GOPATH
 # Fetch the latest version of the package
 RUN go get -u golang.org/x/net/context
 RUN go get -u github.com/golang/dep/cmd/dep
+RUN go get -u github.com/cenkalti/backoff
+RUN go get -u github.com/gomodule/redigo/redis
 
 # Copy thumbnary sources
 COPY . $GOPATH/src/github.com/tsu1980/thumbnary
