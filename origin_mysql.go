@@ -90,7 +90,7 @@ func ListenNotifications(o ServerOptions) error {
 	psc := redis.PubSubConn{Conn: conn}
 
 	channels := []string{
-		o.RedisChannelPrefix + "notification:origin_updated",
+		o.RedisChannelPrefix + "origin:changed",
 	}
 	err = psc.Subscribe(redis.Args{}.AddFlat(channels)...)
 	if err != nil {
@@ -117,7 +117,7 @@ func ListenNotifications(o ServerOptions) error {
 }
 
 func onMessage(msg redis.Message) {
-	if strings.Contains(msg.Channel, "notification:origin_updated") {
+	if strings.Contains(msg.Channel, "origin:changed") {
 		onOriginUpdated((OriginId)(string(msg.Data)))
 	} else {
 		log.Printf("%s: Unknown message: %s\n", msg.Channel, msg.Data)
