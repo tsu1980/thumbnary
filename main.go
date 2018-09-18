@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -12,77 +13,30 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/viper"
+	"github.com/tsu1980/thumbnary/config"
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 
 var (
-	aAddr                      = flag.String("a", "", "Bind address")
-	aPort                      = flag.Int("p", 8088, "Port to listen")
-	aVers                      = flag.Bool("v", false, "Show version")
-	aVersl                     = flag.Bool("version", false, "Show version")
-	aHelp                      = flag.Bool("h", false, "Show help")
-	aHelpl                     = flag.Bool("help", false, "Show help")
-	aCors                      = flag.Bool("cors", false, "Enable CORS support")
-	aAuthForwarding            = flag.Bool("enable-auth-forwarding", false, "Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors")
-	aEnablePlaceholder         = flag.Bool("enable-placeholder", false, "Enable image response placeholder to be used in case of error")
-	aOriginIdDetectMethods     = flag.String("origin-id-detect-methods", "header,query", "List of origin id detect methods(Comma separated)")
-	aOriginIdDetectHostPattern = flag.String("origin-id-detect-host-pattern", "", "The regex pattern string for extract origin id from host name")
-	aOriginIdDetectPathPattern = flag.String("origin-id-detect-path-pattern", "", "The regex pattern string for extract origin id from url path")
-	aRedisURL                  = flag.String("redis-url", "", "The redis server url")
-	aRedisChannelPrefix        = flag.String("redis-channel-prefix", "imarginary:", "The channel name for notification")
-	aDBDriverName              = flag.String("db-driver-name", "", "The database driver name")
-	aDBDataSourceName          = flag.String("db-data-source-name", "", "The database data source name")
-	aMaxAllowedSize            = flag.Int("max-allowed-size", 0, "Restrict maximum size of http image source (in bytes)")
-	aKey                       = flag.String("key", "", "Define API key for authorization")
-	aCertFile                  = flag.String("certfile", "", "TLS certificate file path")
-	aKeyFile                   = flag.String("keyfile", "", "TLS private key file path")
-	aAuthorization             = flag.String("authorization", "", "Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization")
-	aPlaceholder               = flag.String("placeholder", "", "Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200")
-	aHTTPCacheTTL              = flag.Int("http-cache-ttl", -1, "The TTL in seconds")
-	aReadTimeout               = flag.Int("http-read-timeout", 60, "HTTP read timeout in seconds")
-	aWriteTimeout              = flag.Int("http-write-timeout", 60, "HTTP write timeout in seconds")
-	aConcurrency               = flag.Int("concurrency", 0, "Throttle concurrency limit per second")
-	aBurst                     = flag.Int("burst", 100, "Throttle burst max cache size")
-	aMRelease                  = flag.Int("mrelease", 30, "OS memory release interval in seconds")
+	aConfigFile = flag.String("config", "", "Config file path")
+	aVers       = flag.Bool("v", false, "Show version")
+	aVersl      = flag.Bool("version", false, "Show version")
+	aHelp       = flag.Bool("h", false, "Show help")
+	aHelpl      = flag.Bool("help", false, "Show help")
 )
 
 const usage = `thumbnary %s
 
 Usage:
-  thumbnary -p 80
-  thumbnary -cors
-  thumbnary -concurrency 10
-  thumbnary -enable-auth-forwarding
-  thumbnary -authorization "Basic AwDJdL2DbwrD=="
-  thumbnary -enable-placeholder
-  thumbnary -placeholder ./placeholder.jpg
-  thumbnary -enable-url-signature -url-signature-key 4f46feebafc4b5e988f131c4ff8b5997 -url-signature-salt 88f131c4ff8b59974f46feebafc4b5e9
+  thumbnary -config ./config.yml
   thumbnary -h | -help
   thumbnary -v | -version
 
 Options:
-  -a <addr>                 Bind address [default: *]
-  -p <port>                 Bind port [default: 8088]
+  -config <path>            Config file path
   -h, -help                 Show help
   -v, -version              Show version
-  -cors                     Enable CORS support [default: false]
-  -key <key>                Define API key for authorization
-  -http-cache-ttl <num>     The TTL in seconds. Adds caching headers to locally served files.
-  -http-read-timeout <num>  HTTP read timeout in seconds [default: 30]
-  -http-write-timeout <num> HTTP write timeout in seconds [default: 30]
-  -enable-placeholder       Enable image response placeholder to be used in case of error [default: false]
-  -enable-auth-forwarding   Forwards X-Forward-Authorization or Authorization header to the image source server. Tip: secure your server from public access to prevent attack vectors
-  -enable-url-signature     Enable URL signature (URL-safe Base64-encoded HMAC digest) [default: false]
-  -url-signature-key        The URL signature key (32 characters minimum)
-  -url-signature-salt       The URL signature salt (32 characters minimum)
-  -max-allowed-size <bytes> Restrict maximum size of http image source (in bytes)
-  -certfile <path>          TLS certificate file path
-  -keyfile <path>           TLS private key file path
-  -authorization <value>    Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization
-  -placeholder <path>       Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200
-  -concurrency <num>        Throttle concurrency limit per second [default: disabled]
-  -burst <num>              Throttle burst max cache size [default: 100]
-  -mrelease <num>           OS memory release interval in seconds [default: 30]
 `
 
 func main() {
@@ -98,52 +52,89 @@ func main() {
 		showVersion()
 	}
 
-	port := getPort(*aPort)
+	var config config.Configuration
+	viper.SetDefault("Server.Port", "8080")
+	viper.SetDefault("Server.Cors", false)
+	viper.SetDefault("Server.AuthForwarding", false)
+	viper.SetDefault("Server.EnablePlaceholder", false)
+	viper.SetDefault("Server.OriginIdDetectMethods", "header,query")
+	viper.SetDefault("Server.OriginIdDetectHostPattern", "")
+	viper.SetDefault("Server.OriginIdDetectPathPattern", "")
+	viper.SetDefault("RedisURL", "")
+	viper.SetDefault("RedisChannelPrefix", "thumbnary:")
+	viper.SetDefault("DBDriverName", "")
+	viper.SetDefault("DBDataSourceName", "")
+	viper.SetDefault("MaxAllowedSize", 0)
+	viper.SetDefault("HTTPCacheTTL", -1)
+	viper.SetDefault("ReadTimeout", 60)
+	viper.SetDefault("WriteTimeout", 60)
+	viper.SetDefault("Concurrency", 0)
+	viper.SetDefault("Burst", 100)
+	viper.SetDefault("MRelease", 30)
+
+	if *aConfigFile != "" {
+		viper.SetConfigFile(*aConfigFile)
+		if err := viper.ReadInConfig(); err != nil {
+			exitWithError("Error reading config file, %s", err)
+		}
+	}
+	err := viper.Unmarshal(&config)
+	if err != nil {
+		exitWithError("unable to decode into struct, %v", err)
+	}
+
+	bs, err := json.Marshal(&config)
+	if err != nil {
+		exitWithError("unable to marshal config to JSON: %v", err)
+	}
+	log.Printf("config = %s", string(bs))
+
+	port := getPort(config.Server.Port)
 
 	opts := ServerOptions{
 		Port:                      port,
-		Address:                   *aAddr,
-		CORS:                      *aCors,
-		AuthForwarding:            *aAuthForwarding,
-		EnablePlaceholder:         *aEnablePlaceholder,
-		OriginIdDetectHostPattern: *aOriginIdDetectHostPattern,
-		OriginIdDetectPathPattern: *aOriginIdDetectPathPattern,
-		RedisURL:                  *aRedisURL,
-		RedisChannelPrefix:        *aRedisChannelPrefix,
-		DBDriverName:              *aDBDriverName,
-		DBDataSourceName:          *aDBDataSourceName,
-		APIKey:                    *aKey,
-		Concurrency:               *aConcurrency,
-		Burst:                     *aBurst,
-		CertFile:                  *aCertFile,
-		KeyFile:                   *aKeyFile,
-		Placeholder:               *aPlaceholder,
-		HTTPCacheTTL:              *aHTTPCacheTTL,
-		HTTPReadTimeout:           *aReadTimeout,
-		HTTPWriteTimeout:          *aWriteTimeout,
-		Authorization:             *aAuthorization,
-		MaxAllowedSize:            *aMaxAllowedSize,
+		Address:                   config.Server.Addr,
+		CORS:                      config.Server.Cors,
+		AuthForwarding:            config.Server.AuthForwarding,
+		EnablePlaceholder:         config.Server.EnablePlaceholder,
+		OriginIdDetectHostPattern: config.Server.OriginIdDetectHostPattern,
+		OriginIdDetectPathPattern: config.Server.OriginIdDetectPathPattern,
+		RedisURL:                  config.RedisURL,
+		RedisChannelPrefix:        config.RedisChannelPrefix,
+		DBDriverName:              config.DBDriverName,
+		DBDataSourceName:          config.DBDataSourceName,
+		APIKey:                    config.Server.Key,
+		Concurrency:               config.Server.Concurrency,
+		Burst:                     config.Server.Burst,
+		CertFile:                  config.Server.CertFile,
+		KeyFile:                   config.Server.KeyFile,
+		Placeholder:               config.Server.Placeholder,
+		HTTPCacheTTL:              config.Server.HTTPCacheTTL,
+		HTTPReadTimeout:           config.Server.ReadTimeout,
+		HTTPWriteTimeout:          config.Server.WriteTimeout,
+		Authorization:             config.Server.Authorization,
+		MaxAllowedSize:            config.Server.MaxAllowedSize,
 	}
 
 	// Create a memory release goroutine
-	if *aMRelease > 0 {
-		memoryRelease(*aMRelease)
+	if config.Server.MRelease > 0 {
+		memoryRelease(config.Server.MRelease)
 	}
 
 	// Validate HTTP cache param, if present
-	if *aHTTPCacheTTL != -1 {
-		checkHttpCacheTtl(*aHTTPCacheTTL)
+	if config.Server.HTTPCacheTTL != -1 {
+		checkHttpCacheTtl(config.Server.HTTPCacheTTL)
 	}
 
 	// Parse origin id detect methods
-	err := parseOriginIdDetectMethods(&opts, *aOriginIdDetectMethods)
+	err = parseOriginIdDetectMethods(&opts, config.Server.OriginIdDetectMethods)
 	if err != nil {
 		exitWithError(err.Error())
 	}
 
 	// Read placeholder image, if required
-	if *aPlaceholder != "" {
-		buf, err := ioutil.ReadFile(*aPlaceholder)
+	if config.Server.Placeholder != "" {
+		buf, err := ioutil.ReadFile(config.Server.Placeholder)
 		if err != nil {
 			exitWithError("cannot start the server: %s", err)
 		}
@@ -154,7 +145,7 @@ func main() {
 		}
 
 		opts.PlaceholderImage = buf
-	} else if *aEnablePlaceholder {
+	} else if config.Server.EnablePlaceholder {
 		// Expose default placeholder
 		opts.PlaceholderImage = placeholder
 	}
@@ -194,12 +185,12 @@ func getPort(port int) int {
 
 func showUsage() {
 	flag.Usage()
-	os.Exit(1)
+	os.Exit(0)
 }
 
 func showVersion() {
 	fmt.Println(Version)
-	os.Exit(1)
+	os.Exit(0)
 }
 
 func checkHttpCacheTtl(ttl int) {

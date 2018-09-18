@@ -1,13 +1,12 @@
 # Start from a Debian image with the latest version of Go installed
 # and a workspace (GOPATH) configured at /go.
 FROM ubuntu:16.04 as builder
-MAINTAINER tomas@aparicio.me
+MAINTAINER tsu1980@gmail.com
 
 ENV LIBVIPS_VERSION 8.6.3
 
 # Installs libvips + required libraries
 RUN \
-
   # Install dependencies
   apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -17,7 +16,6 @@ RUN \
   libwebp-dev libtiff5-dev libgif-dev libexif-dev libxml2-dev libpoppler-glib-dev \
   swig libmagickwand-dev libpango1.0-dev libmatio-dev libopenslide-dev libcfitsio-dev \
   libgsf-1-dev fftw3-dev liborc-0.4-dev librsvg2-dev && \
-
   # Build libvips
   cd /tmp && \
   curl -OL https://github.com/jcupitt/libvips/releases/download/v${LIBVIPS_VERSION}/vips-${LIBVIPS_VERSION}.tar.gz && \
@@ -27,7 +25,6 @@ RUN \
   make && \
   make install && \
   ldconfig && \
-
   # Clean up
   apt-get remove -y curl automake build-essential && \
   apt-get autoremove -y && \
@@ -66,6 +63,7 @@ RUN go get -u golang.org/x/net/context
 RUN go get -u github.com/golang/dep/cmd/dep
 RUN go get -u github.com/cenkalti/backoff
 RUN go get -u github.com/gomodule/redigo/redis
+RUN go get -u github.com/spf13/viper
 
 # Copy thumbnary sources
 COPY . $GOPATH/src/github.com/tsu1980/thumbnary

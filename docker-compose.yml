@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  thumbnary:
+    image: tsu1980/thumbnary
+    volumes:
+      - ${THUMBNARY_CONFIG}:/etc/thumbnary/config.yml
+    ports:
+      - "9000:9000"
+    environment:
+      - PORT=9000
+    command: "-config /etc/thumbnary/config.yml"
