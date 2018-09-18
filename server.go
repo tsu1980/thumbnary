@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -38,7 +42,7 @@ type ServerOptions struct {
 	OriginRepos               OriginRepository
 }
 
-func Server(o ServerOptions) error {
+func Server(o ServerOptions) {
 	addr := o.Address + ":" + strconv.Itoa(o.Port)
 	handler := NewLog(NewHTTPHandler(o), os.Stdout)
 
@@ -50,14 +54,34 @@ func Server(o ServerOptions) error {
 		WriteTimeout:   time.Duration(o.HTTPWriteTimeout) * time.Second,
 	}
 
-	return listenAndServe(server, o)
+	listenAndServe(server, o)
 }
 
-func listenAndServe(s *http.Server, o ServerOptions) error {
-	if o.CertFile != "" && o.KeyFile != "" {
-		return s.ListenAndServeTLS(o.CertFile, o.KeyFile)
+func listenAndServe(s *http.Server, o ServerOptions) {
+	go func() {
+		var err error
+		if o.CertFile != "" && o.KeyFile != "" {
+			err = s.ListenAndServeTLS(o.CertFile, o.KeyFile)
+		} else {
+			err = s.ListenAndServe()
+		}
+
+		if err != nil {
+			exitWithError("cannot start the server: %s", err)
+		}
+	}()
+
+	// Wait for SIGINT/SIGTERM signals
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	<-sigCh
+
+	log.Printf("Shutdown start..")
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	if err := s.Shutdown(ctx); err != nil {
+		log.Printf("Failed to shutdown %v", err)
 	}
-	return s.ListenAndServe()
+	log.Printf("Server gracefully stopped.")
 }
 
 type MyHttpHandler struct {
