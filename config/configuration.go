@@ -14,4 +14,7 @@ type Configuration struct {
 
 	// The database data source name
 	DBDataSourceName string
+
+	// The database origin table name
+	DBOriginTableName string
 }

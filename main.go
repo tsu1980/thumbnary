@@ -62,8 +62,9 @@ func main() {
 	viper.SetDefault("Server.OriginIdDetectPathPattern", "")
 	viper.SetDefault("RedisURL", "")
 	viper.SetDefault("RedisChannelPrefix", "thumbnary:")
-	viper.SetDefault("DBDriverName", "")
+	viper.SetDefault("DBDriverName", "mysql")
 	viper.SetDefault("DBDataSourceName", "")
+	viper.SetDefault("DBOriginTableName", "origin")
 	viper.SetDefault("MaxAllowedSize", 0)
 	viper.SetDefault("HTTPCacheTTL", -1)
 	viper.SetDefault("ReadTimeout", 60)
@@ -103,6 +104,7 @@ func main() {
 		RedisChannelPrefix:        config.RedisChannelPrefix,
 		DBDriverName:              config.DBDriverName,
 		DBDataSourceName:          config.DBDataSourceName,
+		DBOriginTableName:         config.DBOriginTableName,
 		APIKey:                    config.Server.Key,
 		Concurrency:               config.Server.Concurrency,
 		Burst:                     config.Server.Burst,
