@@ -118,15 +118,15 @@ func ListenNotifications(o ServerOptions) error {
 
 func onMessage(msg redis.Message) {
 	if strings.Contains(msg.Channel, "origin:changed") {
-		onOriginUpdated((OriginId)(string(msg.Data)))
+		onOriginUpdated((OriginSlug)(string(msg.Data)))
 	} else {
 		log.Printf("%s: Unknown message: %s\n", msg.Channel, msg.Data)
 	}
 }
 
-func onOriginUpdated(originId OriginId) {
-	log.Printf("Origin[%s] updated\n", originId)
-	originCache.Remove(originId)
+func onOriginUpdated(originSlug OriginSlug) {
+	log.Printf("Origin[%s] updated\n", originSlug)
+	originCache.Remove(originSlug)
 }
 
 func clearOriginsCacheAll() {
@@ -134,8 +134,8 @@ func clearOriginsCacheAll() {
 	log.Printf("Origins cache cleared")
 }
 
-func (repo *MySQLOriginRepository) Get(originId OriginId) (*Origin, error) {
-	cval, ok := originCache.Get(originId)
+func (repo *MySQLOriginRepository) Get(originSlug OriginSlug) (*Origin, error) {
+	cval, ok := originCache.Get(originSlug)
 	if ok {
 		if origin, ok := cval.(*Origin); ok {
 			return origin, nil
@@ -143,10 +143,10 @@ func (repo *MySQLOriginRepository) Get(originId OriginId) (*Origin, error) {
 	}
 
 	origin := &Origin{}
-	sql := fmt.Sprintf("SELECT ID, Scheme, Host, PathPrefix, URLSignatureEnabled, URLSignatureKey, URLSignatureKey_Previous, URLSignatureKey_Version FROM %s WHERE ID = ?",
+	sql := fmt.Sprintf("SELECT Slug, SourceType, Scheme, Host, PathPrefix, URLSignatureEnabled, URLSignatureKey, URLSignatureKey_Previous, URLSignatureKey_Version FROM %s WHERE Slug = ?",
 		repo.Options.OriginTableName)
-	err := db.QueryRow(sql, (string)(originId)).Scan(
-		&origin.ID,
+	err := db.QueryRow(sql, (string)(originSlug)).Scan(
+		&origin.Slug,
 		&origin.SourceType,
 		&origin.Scheme,
 		&origin.Host,
@@ -157,9 +157,9 @@ func (repo *MySQLOriginRepository) Get(originId OriginId) (*Origin, error) {
 		&origin.URLSignatureKey_Version,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot select origin id: (originId=%s) (err=%v)", originId, err)
+		return nil, fmt.Errorf("Cannot select origin slug: (originSlug=%s) (err=%v)", originSlug, err)
 	}
-	log.Printf("Origin[%s] fetched (origin=%+v)\n", originId, origin)
-	originCache.Add(originId, origin)
+	log.Printf("Origin[%s] fetched (origin=%+v)\n", originSlug, origin)
+	originCache.Add(originSlug, origin)
 	return origin, nil
 }

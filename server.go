@@ -12,35 +12,35 @@ import (
 )
 
 type ServerOptions struct {
-	Port                      int
-	Burst                     int
-	Concurrency               int
-	HTTPCacheTTL              int
-	HTTPReadTimeout           int
-	HTTPWriteTimeout          int
-	MaxAllowedSize            int
-	CORS                      bool
-	AuthForwarding            bool
-	EnablePlaceholder         bool
-	EnableURLSignature        bool
-	OriginIdDetectMethods     []OriginIdDetectMethod
-	OriginIdDetectHostPattern string
-	OriginIdDetectPathPattern string
-	RedisURL                  string
-	RedisChannelPrefix        string
-	DBDriverName              string
-	DBDataSourceName          string
-	OriginTableName           string
-	URLSignatureKey           string
-	URLSignatureSalt          string
-	Address                   string
-	APIKey                    string
-	CertFile                  string
-	KeyFile                   string
-	Authorization             string
-	Placeholder               string
-	PlaceholderImage          []byte
-	OriginRepos               OriginRepository
+	Port                        int
+	Burst                       int
+	Concurrency                 int
+	HTTPCacheTTL                int
+	HTTPReadTimeout             int
+	HTTPWriteTimeout            int
+	MaxAllowedSize              int
+	CORS                        bool
+	AuthForwarding              bool
+	EnablePlaceholder           bool
+	EnableURLSignature          bool
+	OriginSlugDetectMethods     []OriginSlugDetectMethod
+	OriginSlugDetectHostPattern string
+	OriginSlugDetectPathPattern string
+	RedisURL                    string
+	RedisChannelPrefix          string
+	DBDriverName                string
+	DBDataSourceName            string
+	OriginTableName             string
+	URLSignatureKey             string
+	URLSignatureSalt            string
+	Address                     string
+	APIKey                      string
+	CertFile                    string
+	KeyFile                     string
+	Authorization               string
+	Placeholder                 string
+	PlaceholderImage            []byte
+	OriginRepos                 OriginRepository
 }
 
 func Server(o ServerOptions) {

@@ -6,7 +6,8 @@ USE `thumbnary`;
 
 DROP TABLE IF EXISTS `origin`;
 CREATE TABLE `origin` (
-  `ID` char(8) NOT NULL COMMENT '8 bytes random string composed of alphanumeric characters. Use as subdomain(No digits only name)',
+  `ID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `Slug` char(8) NOT NULL COMMENT '8 bytes random string composed of alphanumeric characters. Use as subdomain(No digits only name)',
   `SourceType` int(11) NOT NULL COMMENT 'Source type(1=http)',
   `Scheme` char(10) NOT NULL COMMENT 'Scheme(http or https)',
   `Host` char(255) NOT NULL COMMENT 'Hostname',
@@ -18,5 +19,6 @@ CREATE TABLE `origin` (
   `CreatedDateJST` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `LastUpdatedDateJST` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`ID`),
+  UNIQUE KEY `idx_Slug` (`Slug`),
   KEY `idx_LastUpdatedDateJST` (`LastUpdatedDateJST`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;

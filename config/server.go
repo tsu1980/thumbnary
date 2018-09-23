@@ -18,14 +18,15 @@ type ServerConfiguration struct {
 	// Enable image response placeholder to be used in case of error
 	EnablePlaceholder bool
 
-	// List of origin id detect methods(Comma separated)
-	OriginIdDetectMethods string
+	// List of origin slug detect methods(Comma separated)
+	// host, path, query, header, urlsig are allowed
+	OriginSlugDetectMethods string
 
-	// The regex pattern string for extract origin id from host name
-	OriginIdDetectHostPattern string
+	// The regex pattern string for extract origin slug from host name
+	OriginSlugDetectHostPattern string
 
-	// The regex pattern string for extract origin id from url path
-	OriginIdDetectPathPattern string
+	// The regex pattern string for extract origin slug from url path
+	OriginSlugDetectPathPattern string
 
 	// Restrict maximum size of http image source (in bytes)
 	MaxAllowedSize int

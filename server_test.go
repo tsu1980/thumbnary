@@ -41,7 +41,7 @@ func TestIndex(t *testing.T) {
 
 func TestCrop(t *testing.T) {
 	opts := ServerOptions{
-		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+		OriginSlugDetectMethods: []OriginSlugDetectMethod{"query"},
 	}
 	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
@@ -51,7 +51,7 @@ func TestCrop(t *testing.T) {
 
 	fn := ImageMiddleware(opts)
 	ts := httptest.NewServer(fn)
-	url := ts.URL + "/c!/w=300/testdata/large.jpg?oid=qic0bfzg"
+	url := ts.URL + "/c!/w=300/testdata/large.jpg?origin=qic0bfzg"
 	defer ts.Close()
 
 	res, err := http.Get(url)
@@ -86,7 +86,7 @@ func TestCrop(t *testing.T) {
 
 func TestFit(t *testing.T) {
 	opts := ServerOptions{
-		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+		OriginSlugDetectMethods: []OriginSlugDetectMethod{"query"},
 	}
 	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
@@ -96,7 +96,7 @@ func TestFit(t *testing.T) {
 
 	fn := ImageMiddleware(opts)
 	ts := httptest.NewServer(fn)
-	url := ts.URL + "/c!/w=300,h=300,m=fit/testdata/large.jpg?oid=qic0bfzg"
+	url := ts.URL + "/c!/w=300,h=300,m=fit/testdata/large.jpg?origin=qic0bfzg"
 	defer ts.Close()
 
 	res, err := http.Get(url)
@@ -139,7 +139,7 @@ func TestTypeAuto(t *testing.T) {
 
 	for _, test := range cases {
 		opts := ServerOptions{
-			OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+			OriginSlugDetectMethods: []OriginSlugDetectMethod{"query"},
 		}
 		opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			buf, _ := ioutil.ReadFile("testdata/large.jpg")
@@ -149,7 +149,7 @@ func TestTypeAuto(t *testing.T) {
 
 		fn := ImageMiddleware(opts)
 		ts := httptest.NewServer(fn)
-		url := ts.URL + "/c!/w=300,f=auto/testdata/large.jpg?oid=qic0bfzg"
+		url := ts.URL + "/c!/w=300,f=auto/testdata/large.jpg?origin=qic0bfzg"
 		defer ts.Close()
 
 		req, _ := http.NewRequest("GET", url, nil)
@@ -197,16 +197,16 @@ func setupTestSourceServer(opts ServerOptions, httpFunc http.HandlerFunc) (Serve
 
 	tsImageURL, _ := url.Parse(tsImage.URL)
 
-	originMap := map[OriginId]*Origin{
+	originMap := map[OriginSlug]*Origin{
 		"qic0bfzg": &Origin{
-			ID:         "qic0bfzg",
+			Slug:       "qic0bfzg",
 			SourceType: ImageSourceTypeHttp,
 			Scheme:     tsImageURL.Scheme,
 			Host:       tsImageURL.Host,
 			PathPrefix: "/",
 		},
 		"jdv9ab8v": &Origin{
-			ID:                      "jdv9ab8v",
+			Slug:                    "jdv9ab8v",
 			SourceType:              ImageSourceTypeHttp,
 			Scheme:                  tsImageURL.Scheme,
 			Host:                    tsImageURL.Host,
@@ -216,7 +216,7 @@ func setupTestSourceServer(opts ServerOptions, httpFunc http.HandlerFunc) (Serve
 			URLSignatureKey_Version: 1,
 		},
 		"sigver2": &Origin{
-			ID:                       "sigver2",
+			Slug:                     "sigver2",
 			SourceType:               ImageSourceTypeHttp,
 			Scheme:                   tsImageURL.Scheme,
 			Host:                     tsImageURL.Host,
@@ -236,7 +236,7 @@ func setupTestSourceServer(opts ServerOptions, httpFunc http.HandlerFunc) (Serve
 
 func TestRemoteHTTPSource(t *testing.T) {
 	opts := ServerOptions{
-		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+		OriginSlugDetectMethods: []OriginSlugDetectMethod{"query"},
 	}
 	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
@@ -246,7 +246,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 
 	fn := ImageMiddleware(opts)
 	ts := httptest.NewServer(fn)
-	url := ts.URL + "/c!/w=200,h=200/testdata/large.jpg?oid=qic0bfzg"
+	url := ts.URL + "/c!/w=200,h=200/testdata/large.jpg?origin=qic0bfzg"
 	defer ts.Close()
 
 	res, err := http.Get(url)
@@ -277,7 +277,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 
 func TestInvalidRemoteHTTPSource(t *testing.T) {
 	opts := ServerOptions{
-		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+		OriginSlugDetectMethods: []OriginSlugDetectMethod{"query"},
 	}
 	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(400)
@@ -288,7 +288,7 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 	LoadSources(opts)
 
 	ts := httptest.NewServer(fn)
-	url := ts.URL + "/c!/w=200,h=200/testdata/large.jpg?oid=qic0bfzg"
+	url := ts.URL + "/c!/w=200,h=200/testdata/large.jpg?origin=qic0bfzg"
 	defer ts.Close()
 
 	res, err := http.Get(url)
@@ -302,7 +302,7 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 
 func TestURLSignature(t *testing.T) {
 	opts := ServerOptions{
-		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+		OriginSlugDetectMethods: []OriginSlugDetectMethod{"query"},
 	}
 	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
@@ -314,7 +314,7 @@ func TestURLSignature(t *testing.T) {
 	ts := httptest.NewServer(fn)
 	path := "/c!/w=300/testdata/large.jpg"
 	sig := CreateURLSignatureString(1, path, "secrettest", "")
-	url := ts.URL + path + "?oid=jdv9ab8v" + "&sig=" + sig
+	url := ts.URL + path + "?origin=jdv9ab8v" + "&sig=" + sig
 	defer ts.Close()
 
 	res, err := http.Get(url)
@@ -349,7 +349,7 @@ func TestURLSignature(t *testing.T) {
 
 func TestURLSignatureVersion2(t *testing.T) {
 	opts := ServerOptions{
-		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+		OriginSlugDetectMethods: []OriginSlugDetectMethod{"query"},
 	}
 	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
@@ -361,7 +361,7 @@ func TestURLSignatureVersion2(t *testing.T) {
 	ts := httptest.NewServer(fn)
 	path := "/c!/w=300/testdata/large.jpg"
 	sig := CreateURLSignatureString(2, path, "secrettestnew", "")
-	url := ts.URL + path + "?oid=sigver2" + "&sig=" + sig
+	url := ts.URL + path + "?origin=sigver2" + "&sig=" + sig
 	defer ts.Close()
 
 	res, err := http.Get(url)
@@ -396,7 +396,7 @@ func TestURLSignatureVersion2(t *testing.T) {
 
 func TestURLSignatureVersion2Previous(t *testing.T) {
 	opts := ServerOptions{
-		OriginIdDetectMethods: []OriginIdDetectMethod{"query"},
+		OriginSlugDetectMethods: []OriginSlugDetectMethod{"query"},
 	}
 	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
@@ -408,7 +408,7 @@ func TestURLSignatureVersion2Previous(t *testing.T) {
 	ts := httptest.NewServer(fn)
 	path := "/c!/w=300/testdata/large.jpg"
 	sig := CreateURLSignatureString(1, path, "secrettest", "")
-	url := ts.URL + path + "?oid=sigver2" + "&sig=" + sig
+	url := ts.URL + path + "?origin=sigver2" + "&sig=" + sig
 	defer ts.Close()
 
 	res, err := http.Get(url)
@@ -469,10 +469,10 @@ func BodyAsString(res *http.Response) string {
 }
 
 type MockOriginRepository struct {
-	Origins map[OriginId]*Origin
+	Origins map[OriginSlug]*Origin
 }
 
-func NewMockOriginRepository(origins map[OriginId]*Origin) OriginRepository {
+func NewMockOriginRepository(origins map[OriginSlug]*Origin) OriginRepository {
 	return &MockOriginRepository{Origins: origins}
 }
 
@@ -483,10 +483,10 @@ func (repo *MockOriginRepository) Open() error {
 func (repo *MockOriginRepository) Close() {
 }
 
-func (repo *MockOriginRepository) Get(originId OriginId) (*Origin, error) {
-	origin, ok := repo.Origins[originId]
+func (repo *MockOriginRepository) Get(originSlug OriginSlug) (*Origin, error) {
+	origin, ok := repo.Origins[originSlug]
 	if !ok {
-		return nil, fmt.Errorf("Origin not found: (originId=%s)", originId)
+		return nil, fmt.Errorf("Origin not found: (originSlug=%s)", originSlug)
 	}
 
 	return origin, nil

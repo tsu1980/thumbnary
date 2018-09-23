@@ -57,9 +57,9 @@ func main() {
 	viper.SetDefault("Server.Cors", false)
 	viper.SetDefault("Server.AuthForwarding", false)
 	viper.SetDefault("Server.EnablePlaceholder", false)
-	viper.SetDefault("Server.OriginIdDetectMethods", "header,query")
-	viper.SetDefault("Server.OriginIdDetectHostPattern", "")
-	viper.SetDefault("Server.OriginIdDetectPathPattern", "")
+	viper.SetDefault("Server.OriginSlugDetectMethods", "header,query")
+	viper.SetDefault("Server.OriginSlugDetectHostPattern", "")
+	viper.SetDefault("Server.OriginSlugDetectPathPattern", "")
 	viper.SetDefault("Server.MaxAllowedSize", 0)
 	viper.SetDefault("Server.HTTPCacheTTL", -1)
 	viper.SetDefault("Server.ReadTimeout", 60)
@@ -93,29 +93,29 @@ func main() {
 	port := getPort(config.Server.Port)
 
 	opts := ServerOptions{
-		Port:                      port,
-		Address:                   config.Server.Addr,
-		CORS:                      config.Server.Cors,
-		AuthForwarding:            config.Server.AuthForwarding,
-		EnablePlaceholder:         config.Server.EnablePlaceholder,
-		OriginIdDetectHostPattern: config.Server.OriginIdDetectHostPattern,
-		OriginIdDetectPathPattern: config.Server.OriginIdDetectPathPattern,
-		RedisURL:                  config.Database.RedisURL,
-		RedisChannelPrefix:        config.Database.RedisChannelPrefix,
-		DBDriverName:              config.Database.DBDriverName,
-		DBDataSourceName:          config.Database.DBDataSourceName,
-		OriginTableName:           config.Database.OriginTableName,
-		APIKey:                    config.Server.Key,
-		Concurrency:               config.Server.Concurrency,
-		Burst:                     config.Server.Burst,
-		CertFile:                  config.Server.CertFile,
-		KeyFile:                   config.Server.KeyFile,
-		Placeholder:               config.Server.Placeholder,
-		HTTPCacheTTL:              config.Server.HTTPCacheTTL,
-		HTTPReadTimeout:           config.Server.ReadTimeout,
-		HTTPWriteTimeout:          config.Server.WriteTimeout,
-		Authorization:             config.Server.Authorization,
-		MaxAllowedSize:            config.Server.MaxAllowedSize,
+		Port:                        port,
+		Address:                     config.Server.Addr,
+		CORS:                        config.Server.Cors,
+		AuthForwarding:              config.Server.AuthForwarding,
+		EnablePlaceholder:           config.Server.EnablePlaceholder,
+		OriginSlugDetectHostPattern: config.Server.OriginSlugDetectHostPattern,
+		OriginSlugDetectPathPattern: config.Server.OriginSlugDetectPathPattern,
+		RedisURL:                    config.Database.RedisURL,
+		RedisChannelPrefix:          config.Database.RedisChannelPrefix,
+		DBDriverName:                config.Database.DBDriverName,
+		DBDataSourceName:            config.Database.DBDataSourceName,
+		OriginTableName:             config.Database.OriginTableName,
+		APIKey:                      config.Server.Key,
+		Concurrency:                 config.Server.Concurrency,
+		Burst:                       config.Server.Burst,
+		CertFile:                    config.Server.CertFile,
+		KeyFile:                     config.Server.KeyFile,
+		Placeholder:                 config.Server.Placeholder,
+		HTTPCacheTTL:                config.Server.HTTPCacheTTL,
+		HTTPReadTimeout:             config.Server.ReadTimeout,
+		HTTPWriteTimeout:            config.Server.WriteTimeout,
+		Authorization:               config.Server.Authorization,
+		MaxAllowedSize:              config.Server.MaxAllowedSize,
 	}
 
 	// Create a memory release goroutine
@@ -128,8 +128,8 @@ func main() {
 		checkHttpCacheTtl(config.Server.HTTPCacheTTL)
 	}
 
-	// Parse origin id detect methods
-	err = parseOriginIdDetectMethods(&opts, config.Server.OriginIdDetectMethods)
+	// Parse origin slug detect methods
+	err = parseOriginSlugDetectMethods(&opts, config.Server.OriginSlugDetectMethods)
 	if err != nil {
 		exitWithError(err.Error())
 	}
@@ -217,24 +217,24 @@ func parseOrigins(origins string) []*url.URL {
 	return urls
 }
 
-func parseOriginIdDetectMethods(o *ServerOptions, input string) error {
-	methods := make([]OriginIdDetectMethod, 0, 5)
+func parseOriginSlugDetectMethods(o *ServerOptions, input string) error {
+	methods := make([]OriginSlugDetectMethod, 0, 5)
 	for _, val := range strings.Split(input, ",") {
 		val = strings.ToLower(strings.TrimSpace(val))
-		_, ok := originIdDetectMethodMap[(OriginIdDetectMethod)(val)]
+		_, ok := originSlugDetectMethodMap[(OriginSlugDetectMethod)(val)]
 		if !ok {
-			return fmt.Errorf("Unknown origin id detect method(%s)", val)
+			return fmt.Errorf("Unknown origin slug detect method(%s)", val)
 		}
-		method := (OriginIdDetectMethod)(val)
+		method := (OriginSlugDetectMethod)(val)
 
 		switch method {
-		case OriginIdDetectMethod_Host:
-			if o.OriginIdDetectHostPattern == "" {
-				return fmt.Errorf("Missing required params: origin id detect host pattern")
+		case OriginSlugDetectMethod_Host:
+			if o.OriginSlugDetectHostPattern == "" {
+				return fmt.Errorf("Missing required params: origin slug detect host pattern")
 			}
-		case OriginIdDetectMethod_Path:
-			if o.OriginIdDetectPathPattern == "" {
-				return fmt.Errorf("Missing required params: origin id detect path pattern")
+		case OriginSlugDetectMethod_Path:
+			if o.OriginSlugDetectPathPattern == "" {
+				return fmt.Errorf("Missing required params: origin slug detect path pattern")
 			}
 		}
 
@@ -242,10 +242,10 @@ func parseOriginIdDetectMethods(o *ServerOptions, input string) error {
 	}
 
 	if len(methods) == 0 {
-		return fmt.Errorf("origin id detect methods empty")
+		return fmt.Errorf("origin slug detect methods empty")
 	}
 
-	o.OriginIdDetectMethods = methods
+	o.OriginSlugDetectMethods = methods
 	return nil
 }
 

@@ -19,7 +19,7 @@ import (
 
 type ImageRequest struct {
 	HTTPRequest      *http.Request
-	OriginId         OriginId
+	OriginSlug       OriginSlug
 	Origin           *Origin
 	Options          ImageOptions
 	RelativeFilePath string
@@ -29,7 +29,7 @@ type ImageRequest struct {
 type URLSignatureInfo struct {
 	Version        int
 	SignatureValue string
-	OriginId       OriginId
+	OriginSlug     OriginSlug
 }
 
 func indexController(w http.ResponseWriter, r *http.Request) {
@@ -191,15 +191,15 @@ func imageHandler(w http.ResponseWriter, req *http.Request, imgReq *ImageRequest
 
 // version := "1"
 // value := BASE64URL(HMAC-SHA-256(SigningKey, Path))
-// originID := "ks8vm" + "-"	// Optional
-// signature := originID + version + "." + value
+// originSlug := "ks8vm" + "-"	// Optional
+// signature := originSlug + version + "." + value
 //
 // CreateURLSignatureString(1, "/c!/w=300/testdata/large.jpg", "secrettext", "")
-func CreateURLSignatureString(version int, path string, key string, originId OriginId) string {
+func CreateURLSignatureString(version int, path string, key string, originSlug OriginSlug) string {
 	var b strings.Builder
 
-	if originId != "" {
-		b.WriteString(string(originId) + "-")
+	if originSlug != "" {
+		b.WriteString(string(originSlug) + "-")
 	}
 
 	b.WriteString(strconv.Itoa(version) + ".")
@@ -236,7 +236,7 @@ func parseURLSignature(req *http.Request) (URLSignatureInfo, error) {
 		d, _ := strconv.Atoi(m[2])
 		sigInfo.Version = d
 		sigInfo.SignatureValue = m[3]
-		sigInfo.OriginId = OriginId(strings.TrimSuffix(m[1], "-"))
+		sigInfo.OriginSlug = OriginSlug(strings.TrimSuffix(m[1], "-"))
 	} else {
 		d, _ := strconv.Atoi(m[1])
 		sigInfo.Version = d

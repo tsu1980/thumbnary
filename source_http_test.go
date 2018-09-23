@@ -25,7 +25,7 @@ func TestHttpImageSource(t *testing.T) {
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
 		tsURL, _ := url.Parse(ts.URL)
 		origin := &Origin{
-			ID:              "qic0bfzg",
+			Slug:            "qic0bfzg",
 			SourceType:      ImageSourceTypeHttp,
 			Scheme:          tsURL.Scheme,
 			Host:            tsURL.Host,
@@ -83,7 +83,7 @@ func TestHttpImageSourceError(t *testing.T) {
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
 		tsURL, _ := url.Parse(ts.URL)
 		origin := &Origin{
-			ID:              "qic0bfzg",
+			Slug:            "qic0bfzg",
 			SourceType:      ImageSourceTypeHttp,
 			Scheme:          tsURL.Scheme,
 			Host:            tsURL.Host,
@@ -118,7 +118,7 @@ func TestHttpImageSourceExceedsMaximumAllowedLength(t *testing.T) {
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
 		tsURL, _ := url.Parse(ts.URL)
 		origin := &Origin{
-			ID:              "qic0bfzg",
+			Slug:            "qic0bfzg",
 			SourceType:      ImageSourceTypeHttp,
 			Scheme:          tsURL.Scheme,
 			Host:            tsURL.Host,
