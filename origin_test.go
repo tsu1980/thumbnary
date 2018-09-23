@@ -86,7 +86,7 @@ func TestOriginSlugDetect_Header(t *testing.T) {
 func TestOriginSlugDetect_URLSignature(t *testing.T) {
 	opts := ServerOptions{}
 	var originSlugExpected OriginSlug = "klj8a"
-	req, _ := http.NewRequest("GET", "http://example.test/c!/w=10/abc.jpg?sig=klj8a-1.yiKX5u2kw6wp9zDgbrt2iOIi8IsoRIpw8fVgVc0yrNg=", nil)
+	req, _ := http.NewRequest("GET", "http://example.test/c!/w=10/abc.jpg?sig=klj8a-1.yiKX5u2kw6wp9zDgbrt2iOIi8IsoRIpw8fVgVc0yrNg", nil)
 	sigInfo, err := parseURLSignature(req)
 	imgReq := &ImageRequest{
 		HTTPRequest:      req,

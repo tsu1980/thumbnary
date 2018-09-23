@@ -213,7 +213,7 @@ func CreateURLSignatureString(version int, path string, key string, originSlug O
 func CalcURLSignatureValue(path string, key string) string {
 	mac := hmac.New(sha256.New, []byte(key))
 	mac.Write([]byte(path))
-	return base64.URLEncoding.EncodeToString(mac.Sum(nil))
+	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 }
 
 func parseURLSignature(req *http.Request) (URLSignatureInfo, error) {
