@@ -30,7 +30,7 @@ type ServerOptions struct {
 	RedisChannelPrefix        string
 	DBDriverName              string
 	DBDataSourceName          string
-	DBOriginTableName         string
+	OriginTableName           string
 	URLSignatureKey           string
 	URLSignatureSalt          string
 	Address                   string

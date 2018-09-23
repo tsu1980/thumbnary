@@ -60,18 +60,18 @@ func main() {
 	viper.SetDefault("Server.OriginIdDetectMethods", "header,query")
 	viper.SetDefault("Server.OriginIdDetectHostPattern", "")
 	viper.SetDefault("Server.OriginIdDetectPathPattern", "")
-	viper.SetDefault("RedisURL", "")
-	viper.SetDefault("RedisChannelPrefix", "thumbnary:")
-	viper.SetDefault("DBDriverName", "mysql")
-	viper.SetDefault("DBDataSourceName", "")
-	viper.SetDefault("DBOriginTableName", "origin")
-	viper.SetDefault("MaxAllowedSize", 0)
-	viper.SetDefault("HTTPCacheTTL", -1)
-	viper.SetDefault("ReadTimeout", 60)
-	viper.SetDefault("WriteTimeout", 60)
-	viper.SetDefault("Concurrency", 0)
-	viper.SetDefault("Burst", 100)
-	viper.SetDefault("MRelease", 30)
+	viper.SetDefault("Server.MaxAllowedSize", 0)
+	viper.SetDefault("Server.HTTPCacheTTL", -1)
+	viper.SetDefault("Server.ReadTimeout", 60)
+	viper.SetDefault("Server.WriteTimeout", 60)
+	viper.SetDefault("Server.Concurrency", 0)
+	viper.SetDefault("Server.Burst", 100)
+	viper.SetDefault("Server.MRelease", 30)
+	viper.SetDefault("Database.RedisURL", "")
+	viper.SetDefault("Database.RedisChannelPrefix", "thumbnary:")
+	viper.SetDefault("Database.DBDriverName", "mysql")
+	viper.SetDefault("Database.DBDataSourceName", "")
+	viper.SetDefault("Database.OriginTableName", "origin")
 
 	if *aConfigFile != "" {
 		viper.SetConfigFile(*aConfigFile)
@@ -100,11 +100,11 @@ func main() {
 		EnablePlaceholder:         config.Server.EnablePlaceholder,
 		OriginIdDetectHostPattern: config.Server.OriginIdDetectHostPattern,
 		OriginIdDetectPathPattern: config.Server.OriginIdDetectPathPattern,
-		RedisURL:                  config.RedisURL,
-		RedisChannelPrefix:        config.RedisChannelPrefix,
-		DBDriverName:              config.DBDriverName,
-		DBDataSourceName:          config.DBDataSourceName,
-		DBOriginTableName:         config.DBOriginTableName,
+		RedisURL:                  config.Database.RedisURL,
+		RedisChannelPrefix:        config.Database.RedisChannelPrefix,
+		DBDriverName:              config.Database.DBDriverName,
+		DBDataSourceName:          config.Database.DBDataSourceName,
+		OriginTableName:           config.Database.OriginTableName,
 		APIKey:                    config.Server.Key,
 		Concurrency:               config.Server.Concurrency,
 		Burst:                     config.Server.Burst,

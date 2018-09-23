@@ -143,8 +143,8 @@ func (repo *MySQLOriginRepository) Get(originId OriginId) (*Origin, error) {
 	}
 
 	origin := &Origin{}
-	sql := fmt.Sprintf("SELECT ID, Scheme, Host, PathPrefix, URLSignatureKeyEnabled, URLSignatureKey, URLSignatureKey_Previous, URLSignatureKey_Version FROM %s WHERE ID = ?",
-		repo.Options.DBOriginTableName)
+	sql := fmt.Sprintf("SELECT ID, Scheme, Host, PathPrefix, URLSignatureEnabled, URLSignatureKey, URLSignatureKey_Previous, URLSignatureKey_Version FROM %s WHERE ID = ?",
+		repo.Options.OriginTableName)
 	err := db.QueryRow(sql, (string)(originId)).Scan(
 		&origin.ID,
 		&origin.SourceType,

@@ -1,8 +1,9 @@
-RedisURL: "redis://127.0.0.1:6379"
-RedisChannelPrefix: "thumbnary:"
-DBDriverName: "mysql"
-DBDataSourceName: "root:root@tcp(127.0.0.1:3306)/thumbnary"
-DBOriginTableName: "origin"
+Database:
+  RedisURL: "redis://127.0.0.1:6379"
+  RedisChannelPrefix: "thumbnary:"
+  DBDriverName: "mysql"
+  DBDataSourceName: "root:root@tcp(127.0.0.1:3306)/thumbnary"
+  OriginTableName: "origin"
 
 Server:
   Port: 9000
