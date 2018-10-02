@@ -28,6 +28,7 @@ const (
 
 // ImageOptions represent all the supported image transformation params as first level members
 type ImageOptions struct {
+	NoConvert  bool
 	Width      int
 	Height     int
 	Upscale    bool
@@ -48,6 +49,11 @@ type ImageOptions struct {
 
 	OutputFormat string
 	Quality      int
+}
+
+// ImageOptionsNoConvert represent No conversion options
+var ImageOptionsNoConvert = ImageOptions{
+	NoConvert: false,
 }
 
 // BimgOptions creates a new bimg compatible options struct mapping the fields properly

@@ -46,3 +46,22 @@ func TestImageFit(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 }
+
+func TestImageNoConvert(t *testing.T) {
+	opts := ImageOptions{
+		NoConvert: true,
+	}
+	buf, _ := ioutil.ReadAll(readFile("thumbnary.jpg"))
+
+	img, err := ConvertImage(buf, opts)
+	if err != nil {
+		t.Errorf("Cannot process image: %s", err)
+	}
+	if img.Mime != "image/jpeg" {
+		t.Error("Invalid image MIME type")
+	}
+	// 550x740 -> 550x740
+	if err = assertSize(img.Body, 550, 740); err != nil {
+		t.Errorf(err.Error())
+	}
+}

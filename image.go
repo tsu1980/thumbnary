@@ -61,6 +61,11 @@ func InfoImage(buf []byte, o ImageOptions) (Image, error) {
 }
 
 func ConvertImage(buf []byte, o ImageOptions) (Image, error) {
+	if o.NoConvert == true {
+		mime := GetImageMimeType(bimg.DetermineImageType(buf))
+		return Image{Body: buf, Mime: mime}, nil
+	}
+
 	opts := BimgOptions(o)
 
 	switch o.ResizeMode {

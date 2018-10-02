@@ -33,9 +33,14 @@ var allowedParams = map[string]string{
 }
 
 func readParams(inputParamsStr string) ImageOptions {
+	if inputParamsStr == "none" {
+		return ImageOptionsNoConvert
+	}
+
+	paramsMap := make(map[string]string)
+
 	r := regexp.MustCompile(`([^,=]+)=([^,=]+)`)
 	paramsList := r.FindAllStringSubmatch(inputParamsStr, -1)
-	paramsMap := make(map[string]string)
 	for i := 0; i < len(paramsList); i++ {
 		paramsMap[paramsList[i][1]] = paramsList[i][2]
 	}
