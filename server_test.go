@@ -441,6 +441,55 @@ func TestURLSignatureVersion2Previous(t *testing.T) {
 	}
 }
 
+func TestExternalHTTPSource(t *testing.T) {
+	opts := ServerOptions{
+		OriginSlugDetectMethods: []OriginSlugDetectMethod{"query"},
+		AllowExternalHTTPSource: true,
+	}
+	opts, td := setupTestSourceServer(opts, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.String() != "/testdata/large.jpg" {
+			t.Fatal("Bad request: " + req.URL.String())
+		}
+		buf, _ := ioutil.ReadFile("testdata/large.jpg")
+		w.Write(buf)
+	}))
+	defer td()
+
+	fn := ImageMiddleware(opts)
+	ts := httptest.NewServer(fn)
+	tsImageOrigin, _ := opts.OriginRepos.Get("jdv9ab8v")
+	urlFilePath := url.QueryEscape(tsImageOrigin.Scheme + "://" + tsImageOrigin.Host + "/testdata/large.jpg")
+	path := "/c!/w=200,h=200/" + urlFilePath
+	sig := CreateURLSignatureString(1, path, "secrettest", "")
+	url := ts.URL + path + "?origin=jdv9ab8v" + "&sig=" + sig
+	defer ts.Close()
+
+	res, err := http.Get(url)
+	if err != nil {
+		t.Fatal("Cannot perform the request")
+	}
+	if res.StatusCode != 200 {
+		t.Fatalf("Invalid response status: (url=%+v) (res=%+v) (body=%s)", url, res, BodyAsString(res))
+	}
+
+	image, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(image) == 0 {
+		t.Fatalf("Empty response body")
+	}
+
+	err = assertSize(image, 200, 200)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if bimg.DetermineImageTypeName(image) != "jpeg" {
+		t.Fatalf("Invalid image type")
+	}
+}
+
 func testServer(fn func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(fn))
 }

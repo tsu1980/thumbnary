@@ -19,6 +19,7 @@ type Origin struct {
 	URLSignatureKey          string
 	URLSignatureKey_Previous string
 	URLSignatureKey_Version  int
+	AllowExternalHTTPSource  bool
 }
 
 type OriginRepository interface {

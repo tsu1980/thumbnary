@@ -41,6 +41,7 @@ type ServerOptions struct {
 	Placeholder                 string
 	PlaceholderImage            []byte
 	OriginRepos                 OriginRepository
+	AllowExternalHTTPSource     bool
 }
 
 func Server(o ServerOptions) {

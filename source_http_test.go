@@ -33,7 +33,7 @@ func TestHttpImageSource(t *testing.T) {
 			URLSignatureKey: "zdA7VAsZUwZJqg4u",
 		}
 
-		body, err = source.GetImage(r, origin, "abc.jpg")
+		body, err = source.GetImage(r, origin, "abc.jpg", false)
 		if err != nil {
 			t.Fatalf("Error while reading the body: %s", err)
 		}
@@ -91,7 +91,7 @@ func TestHttpImageSourceError(t *testing.T) {
 			URLSignatureKey: "zdA7VAsZUwZJqg4u",
 		}
 
-		_, err = source.GetImage(r, origin, "abc.jpg")
+		_, err = source.GetImage(r, origin, "abc.jpg", false)
 		if err == nil {
 			t.Fatalf("Server response should not be valid: %s", err)
 		}
@@ -126,7 +126,7 @@ func TestHttpImageSourceExceedsMaximumAllowedLength(t *testing.T) {
 			URLSignatureKey: "zdA7VAsZUwZJqg4u",
 		}
 
-		body, err = source.GetImage(r, origin, "abc.jpg")
+		body, err = source.GetImage(r, origin, "abc.jpg", false)
 		if err == nil {
 			t.Fatalf("It should not allow a request to image exceeding maximum allowed size: %s", err)
 		}

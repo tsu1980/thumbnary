@@ -143,7 +143,7 @@ func (repo *MySQLOriginRepository) Get(originSlug OriginSlug) (*Origin, error) {
 	}
 
 	origin := &Origin{}
-	sql := fmt.Sprintf("SELECT Slug, SourceType, Scheme, Host, PathPrefix, URLSignatureEnabled, URLSignatureKey, URLSignatureKey_Previous, URLSignatureKey_Version FROM %s WHERE Slug = ?",
+	sql := fmt.Sprintf("SELECT Slug, SourceType, Scheme, Host, PathPrefix, URLSignatureEnabled, URLSignatureKey, URLSignatureKey_Previous, URLSignatureKey_Version, AllowExternalHTTPSource FROM %s WHERE Slug = ?",
 		repo.Options.OriginTableName)
 	err := db.QueryRow(sql, (string)(originSlug)).Scan(
 		&origin.Slug,
@@ -155,6 +155,7 @@ func (repo *MySQLOriginRepository) Get(originSlug OriginSlug) (*Origin, error) {
 		&origin.URLSignatureKey,
 		&origin.URLSignatureKey_Previous,
 		&origin.URLSignatureKey_Version,
+		&origin.AllowExternalHTTPSource,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Cannot select origin slug: (originSlug=%s) (err=%v)", originSlug, err)

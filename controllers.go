@@ -22,7 +22,7 @@ type ImageRequest struct {
 	OriginSlug       OriginSlug
 	Origin           *Origin
 	Options          ImageOptions
-	RelativeFilePath string
+	FilePath         string
 	URLSignatureInfo URLSignatureInfo
 }
 
@@ -80,12 +80,6 @@ func imageController(o ServerOptions) func(http.ResponseWriter, *http.Request) {
 }
 
 func imageHandler(w http.ResponseWriter, req *http.Request, imgReq *ImageRequest, o ServerOptions) {
-	imageSource := imageSourceMap[imgReq.Origin.SourceType]
-	if imageSource == nil {
-		ErrorReply(req, w, ErrMissingImageSource, o)
-		return
-	}
-
 	r := regexp.MustCompile("/c!/([^/]+)/(.+)")
 	values := r.FindStringSubmatch(req.URL.EscapedPath())
 	if values == nil {
@@ -96,9 +90,23 @@ func imageHandler(w http.ResponseWriter, req *http.Request, imgReq *ImageRequest
 
 	imgReq.Options = readParams(values[1])
 	//log.Printf("readParams: %#v\n", imgReq.Options)
-	imgReq.RelativeFilePath = values[2]
+	imgReq.FilePath = values[2]
 
-	buf, err := imageSource.GetImage(req, imgReq.Origin, imgReq.RelativeFilePath)
+	imageSource := imageSourceMap[imgReq.Origin.SourceType]
+	if imageSource == nil {
+		ErrorReply(req, w, ErrMissingImageSource, o)
+		return
+	}
+	var isURLSignaturePresent = imgReq.URLSignatureInfo.SignatureValue != ""
+	var isExternalHTTPSource = false
+	if o.AllowExternalHTTPSource &&
+		isURLSignaturePresent &&
+		(strings.HasPrefix(imgReq.FilePath, "http%3A%2F%2F") || strings.HasPrefix(imgReq.FilePath, "https%3A%2F%2F")) {
+		imageSource = imageSourceMap[ImageSourceTypeHttp]
+		isExternalHTTPSource = true
+	}
+
+	buf, err := imageSource.GetImage(req, imgReq.Origin, imgReq.FilePath, isExternalHTTPSource)
 	if err != nil {
 		ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
 		return

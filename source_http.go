@@ -17,18 +17,31 @@ func NewHttpImageSource(config *SourceConfig) ImageSource {
 	return &HttpImageSource{config}
 }
 
-func (s *HttpImageSource) GetImage(ireq *http.Request, origin *Origin, relPath string) ([]byte, error) {
-	u := &url.URL{
-		Scheme: origin.Scheme,
-		Host:   origin.Host,
-		Path:   path.Join(origin.PathPrefix, relPath),
-	}
-	url, err := url.Parse(u.String())
-	if err != nil {
-		return nil, err
+func (s *HttpImageSource) GetImage(ireq *http.Request, origin *Origin, filePath string, isExternalHTTPSource bool) ([]byte, error) {
+	var uri *url.URL
+	var err error
+	if isExternalHTTPSource {
+		urlStr, err := url.QueryUnescape(filePath)
+		if err != nil {
+			return nil, err
+		}
+		uri, err = url.Parse(urlStr)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		u := &url.URL{
+			Scheme: origin.Scheme,
+			Host:   origin.Host,
+			Path:   path.Join(origin.PathPrefix, filePath),
+		}
+		uri, err = url.Parse(u.String())
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return s.fetchImage(url, ireq)
+	return s.fetchImage(uri, ireq)
 }
 
 func (s *HttpImageSource) fetchImage(url *url.URL, ireq *http.Request) ([]byte, error) {
