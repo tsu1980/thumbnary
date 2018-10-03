@@ -68,13 +68,13 @@ func ConvertImage(buf []byte, o ImageOptions) (Image, error) {
 
 	opts := BimgOptions(o)
 
-	imageTypeSrc := opts.Type
-	if imageTypeSrc == 0 {
-		imageTypeSrc = bimg.DetermineImageType(buf)
+	imageTypeDest := opts.Type
+	if imageTypeDest == 0 {
+		imageTypeDest = bimg.DetermineImageType(buf)
 	}
 
 	// If output image format is unsupported, fallback to JPEG
-	if bimg.IsTypeSupportedSave(imageTypeSrc) == false {
+	if bimg.IsTypeSupportedSave(imageTypeDest) == false {
 		opts.Type = bimg.JPEG
 	}
 
