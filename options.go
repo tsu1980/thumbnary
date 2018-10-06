@@ -53,7 +53,7 @@ type ImageOptions struct {
 
 // ImageOptionsNoConvert represent No conversion options
 var ImageOptionsNoConvert = ImageOptions{
-	NoConvert: false,
+	NoConvert: true,
 }
 
 // BimgOptions creates a new bimg compatible options struct mapping the fields properly
