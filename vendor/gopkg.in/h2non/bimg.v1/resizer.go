@@ -273,7 +273,7 @@ func extractOrEmbedImage(image *C.VipsImage, o Options) (*C.VipsImage, error) {
 		break
 	case o.Top != 0 || o.Left != 0 || o.AreaWidth != 0 || o.AreaHeight != 0:
 		if o.AreaWidth == 0 {
-			o.AreaHeight = o.Width
+			o.AreaWidth = o.Width
 		}
 		if o.AreaHeight == 0 {
 			o.AreaHeight = o.Height
@@ -291,7 +291,6 @@ func extractOrEmbedImage(image *C.VipsImage, o Options) (*C.VipsImage, error) {
 func rotateAndFlipImage(image *C.VipsImage, o Options) (*C.VipsImage, bool, error) {
 	var err error
 	var rotated bool
-	var direction Direction = -1
 
 	if o.NoAutoRotate == false {
 		rotation, flip := calculateRotationAndFlip(image, o.Rotate)
@@ -309,16 +308,14 @@ func rotateAndFlipImage(image *C.VipsImage, o Options) (*C.VipsImage, bool, erro
 	}
 
 	if o.Flip {
-		direction = Horizontal
-	} else if o.Flop {
-		direction = Vertical
-	}
-
-	if direction != -1 {
 		rotated = true
-		image, err = vipsFlip(image, direction)
+		image, err = vipsFlip(image, Vertical)
 	}
 
+	if o.Flop {
+		rotated = true
+		image, err = vipsFlip(image, Horizontal)
+	}
 	return image, rotated, err
 }
 
@@ -446,8 +443,7 @@ func imageCalculations(o *Options, inWidth, inHeight int) float64 {
 	switch {
 	// Fixed width and height
 	case o.Width > 0 && o.Height > 0:
-        // patch https://github.com/h2non/bimg/pull/224
-        if o.Crop {
+		if o.Crop {
 			factor = math.Min(xfactor, yfactor)
 		} else {
 			factor = math.Max(xfactor, yfactor)
