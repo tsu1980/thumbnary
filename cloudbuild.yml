@@ -7,4 +7,4 @@ steps:
   entrypoint: ./build/cleanupoldimages.sh
   args: ['asia.gcr.io/chocorail-1919/thumbnary', "30", "10"]
 - name: gcr.io/cloud-builders/curl
-  args: ['http://console.chocorail.com/sendemail', '--form-string', 'subject=thumbnaryのビルドが完了しました', '--form-string', 'body=<html><body><pre>thumbnaryのビルドが完了しました。<br><br>ビルドの詳細：<br>https://console.cloud.google.com/cloud-build/builds/$BUILD_ID<br><br>コンテナイメージ：<br>https://gcr.io/chocorail-1919/thumbnary:$SHORT_SHA<br><br>thumbnaryデプロイ：<br>kubectl set image deployment/thumbnary thumbnary=gcr.io/chocorail-1919/thumbnary:$SHORT_SHA</pre></body></html>', '--form-string', 'accessToken=UtvFMVUceUX0LK3g']
+  args: ['https://console.chocorail.com/sendemail', '--form-string', 'subject=thumbnaryのビルドが完了しました', '--form-string', 'body=<html><body><pre>thumbnaryのビルドが完了しました。<br><br>ビルドの詳細：<br>https://console.cloud.google.com/cloud-build/builds/$BUILD_ID<br><br>コンテナイメージ：<br>https://gcr.io/chocorail-1919/thumbnary:$SHORT_SHA<br><br>thumbnaryデプロイ：<br>kubectl set image deployment/thumbnary thumbnary=gcr.io/chocorail-1919/thumbnary:$SHORT_SHA</pre></body></html>', '--form-string', 'accessToken=UtvFMVUceUX0LK3g']
