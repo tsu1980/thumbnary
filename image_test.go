@@ -65,21 +65,3 @@ func TestImageNoConvert(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 }
-
-func TestFallbackOutputFormat(t *testing.T) {
-	opts := ImageOptions{
-		Width:        30,
-		Height:       30,
-		ResizeMode:   ResizeModeCrop,
-		OutputFormat: "auto",
-	}
-	buf, _ := ioutil.ReadAll(readFile("smile.svg"))
-
-	img, err := ConvertImage(buf, opts)
-	if err != nil {
-		t.Errorf("Cannot process image: %s", err)
-	}
-	if img.Mime != "image/jpeg" {
-		t.Error("Invalid image MIME type")
-	}
-}
