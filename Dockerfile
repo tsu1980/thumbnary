@@ -35,6 +35,7 @@ RUN \
 COPY --from=builder /usr/local/lib /usr/local/lib
 RUN ldconfig
 COPY --from=builder /go/bin/thumbnary bin/
+COPY --from=builder /etc/thumbnary/config.yml $GOPATH/src/github.com/tsu1980/thumbnary/config.yml
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 
 # Server port to listen
