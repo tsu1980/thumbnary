@@ -5,6 +5,11 @@ steps:
   args: ['build', '-f', './Dockerfile', '-t', 'asia.gcr.io/chocorail-1919/thumbnary:$SHORT_SHA', '-t', 'asia.gcr.io/chocorail-1919/thumbnary:latest', '.']
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'asia.gcr.io/chocorail-1919/thumbnary']
+- name: 'gcr.io/cloud-builders/kubectl'
+  args: ['set', 'image', 'deployment/thumbnary', 'thumbnary=asia.gcr.io/chocorail-1919/thumbnary:$SHORT_SHA']
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=asia-northeast1-c'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=chocorail-cluster'
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: ./build/cleanupoldimages.sh
   args: ['asia.gcr.io/chocorail-1919/thumbnary', "30", "10"]
