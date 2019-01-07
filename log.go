@@ -78,5 +78,10 @@ func (h *LogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	record.time = finishTime.UTC()
 	record.elapsedTime = finishTime.Sub(startTime)
 
+	// Ignore health check urls from access log
+	if r.Method != "GET" || (r.RequestURI == "/" || r.RequestURI == "/health") {
+		return
+	}
+
 	record.Log(h.io)
 }
