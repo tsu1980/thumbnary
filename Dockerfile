@@ -36,6 +36,7 @@ COPY --from=builder /usr/local/lib /usr/local/lib
 RUN ldconfig
 COPY --from=builder /go/bin/thumbnary bin/
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
+COPY ./config.yml /etc/thumbnary/config.yml
 
 # Server port to listen
 ENV PORT 9000
