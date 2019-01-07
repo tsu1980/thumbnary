@@ -1,4 +1,6 @@
 steps:
+- name: gcr.io/cloud-builders/gsutil
+  args: ['cp', 'gs://chocorail-secrets/thumbnary/config.yml', './']
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-f', './Dockerfile', '-t', 'asia.gcr.io/chocorail-1919/thumbnary:$SHORT_SHA', '-t', 'asia.gcr.io/chocorail-1919/thumbnary:latest', '.']
 - name: 'gcr.io/cloud-builders/docker'
