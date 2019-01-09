@@ -25,12 +25,12 @@ func NewMySQLOriginRepository(o ServerOptions) OriginRepository {
 func (repo *MySQLOriginRepository) Open() error {
 	err := OpenDB(repo.Options)
 	if err != nil {
-		fmt.Errorf("failed to open database: %s", err)
+		return fmt.Errorf("failed to open database: %s", err)
 	}
 
 	err = StartRedis(repo.Options)
 	if err != nil {
-		fmt.Errorf("failed to start redis: %s", err)
+		return fmt.Errorf("failed to start redis: %s", err)
 	}
 
 	return nil
