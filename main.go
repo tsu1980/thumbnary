@@ -61,6 +61,7 @@ func main() {
 	viper.SetDefault("Server.OriginSlugDetectHostPattern", "")
 	viper.SetDefault("Server.OriginSlugDetectPathPattern", "")
 	viper.SetDefault("Server.MaxAllowedSize", 0)
+	viper.SetDefault("Server.MaxOutputMP", 0)
 	viper.SetDefault("Server.HTTPCacheTTL", -1)
 	viper.SetDefault("Server.ReadTimeout", 60)
 	viper.SetDefault("Server.WriteTimeout", 60)
@@ -116,6 +117,7 @@ func main() {
 		HTTPWriteTimeout:            config.Server.WriteTimeout,
 		Authorization:               config.Server.Authorization,
 		MaxAllowedSize:              config.Server.MaxAllowedSize,
+		MaxOutputMP:                 config.Server.MaxOutputMP,
 	}
 
 	// Create a memory release goroutine

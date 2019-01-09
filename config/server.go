@@ -31,6 +31,9 @@ type ServerConfiguration struct {
 	// Restrict maximum size of http image source (in bytes)
 	MaxAllowedSize int
 
+	// The maximum area of output image (in Megapixel)
+	MaxOutputMP int
+
 	// Define API key for authorization
 	Key string
 

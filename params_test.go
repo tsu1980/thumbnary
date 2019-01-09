@@ -8,6 +8,67 @@ import (
 
 const fixture = "fixtures/large.jpg"
 
+func TestValidateImageOptions(t *testing.T) {
+	tests := []struct {
+		description string
+		serverOpts  ServerOptions
+		imgOpts     ImageOptions
+		valid       bool
+	}{
+		{
+			description: "Max output MP not set, output image area is 4MP, should be valid",
+			serverOpts: ServerOptions{
+				MaxOutputMP: 0,
+			},
+			imgOpts: ImageOptions{
+				Width:  2000,
+				Height: 2000,
+			},
+			valid: true,
+		},
+		{
+			description: "Max output restrict to 4MP, output image area is 4MP, should be valid",
+			serverOpts: ServerOptions{
+				MaxOutputMP: 4,
+			},
+			imgOpts: ImageOptions{
+				Width:  2000,
+				Height: 2000,
+			},
+			valid: true,
+		},
+		{
+			description: "Max output restrict to 4MP, output image area is 4.002MP, should not be valid",
+			serverOpts: ServerOptions{
+				MaxOutputMP: 4,
+			},
+			imgOpts: ImageOptions{
+				Width:  2001,
+				Height: 2000,
+			},
+			valid: false,
+		},
+		{
+			description: "Max output restrict to 4MP, output image area is 3.998MP, should be valid",
+			serverOpts: ServerOptions{
+				MaxOutputMP: 4,
+			},
+			imgOpts: ImageOptions{
+				Width:  1999,
+				Height: 2000,
+			},
+			valid: true,
+		},
+	}
+
+	for _, tc := range tests {
+		err := validateImageOptions(tc.imgOpts, tc.serverOpts)
+		if (err == nil) != tc.valid {
+			t.Errorf("Test %#v failed: %v\n", tc.description, err)
+		}
+	}
+}
+
 func TestReadParams(t *testing.T) {
 	str := "w=100,h=80,lo=0.2,b=ff0a14"
 	params := readParams(str)

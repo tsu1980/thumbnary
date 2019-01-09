@@ -19,6 +19,7 @@ type ServerOptions struct {
 	HTTPReadTimeout             int
 	HTTPWriteTimeout            int
 	MaxAllowedSize              int
+	MaxOutputMP                 int
 	CORS                        bool
 	AuthForwarding              bool
 	EnablePlaceholder           bool

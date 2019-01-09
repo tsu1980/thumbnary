@@ -92,6 +92,12 @@ func imageHandler(w http.ResponseWriter, req *http.Request, imgReq *ImageRequest
 	//log.Printf("readParams: %#v\n", imgReq.Options)
 	imgReq.FilePath = values[2]
 
+	err := validateImageOptions(imgReq.Options, o)
+	if err != nil {
+		ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
+		return
+	}
+
 	imageSource := imageSourceMap[imgReq.Origin.SourceType]
 	if imageSource == nil {
 		ErrorReply(req, w, ErrMissingImageSource, o)

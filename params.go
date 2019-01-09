@@ -32,6 +32,14 @@ var allowedParams = map[string]string{
 	"q": "int",
 }
 
+func validateImageOptions(opts ImageOptions, o ServerOptions) error {
+	outputArea := opts.Width * opts.Height
+	if o.MaxOutputMP > 0 && outputArea > (o.MaxOutputMP*1000000) {
+		return fmt.Errorf("The output image area(%dx%d) is exceed maximum area(%dMP)", opts.Width, opts.Height, o.MaxOutputMP)
+	}
+	return nil
+}
+
 func readParams(inputParamsStr string) ImageOptions {
 	if inputParamsStr == "none" {
 		return ImageOptionsNoConvert
