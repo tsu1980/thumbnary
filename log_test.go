@@ -26,7 +26,7 @@ func TestLog(t *testing.T) {
 	ts := httptest.NewServer(log)
 	defer ts.Close()
 
-	_, err := http.Get(ts.URL)
+	_, err := http.Get(ts.URL + "/hello")
 	if err != nil {
 		t.Fatal(err)
 	}
