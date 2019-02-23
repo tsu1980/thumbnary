@@ -1,13 +1,16 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/cenkalti/backoff"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/gomodule/redigo/redis"
 	"github.com/hashicorp/golang-lru"
 )
@@ -42,8 +45,46 @@ func (repo *MySQLOriginRepository) Close() {
 var db *sql.DB
 var originCache *lru.ARCCache
 
+// OpenDB open database connection
 func OpenDB(o ServerOptions) error {
 	var err = (error)(nil)
+
+	if o.DBTlsKeyName != "" && o.DBTlsServerHostName != "" && o.DBTlsServerCAPem != "" && o.DBTlsClientCertPem != "" && o.DBTlsClientKeyPem != "" {
+		serverCAPem, err := base64.StdEncoding.DecodeString(o.DBTlsServerCAPem)
+		if err != nil {
+			return fmt.Errorf("Failed to decode server ca PEM value")
+		}
+		clientCertPem, err := base64.StdEncoding.DecodeString(o.DBTlsClientCertPem)
+		if err != nil {
+			return fmt.Errorf("Failed to decode client certificate PEM value")
+		}
+		clientKeyPem, err := base64.StdEncoding.DecodeString(o.DBTlsClientKeyPem)
+		if err != nil {
+			return fmt.Errorf("Failed to decode client key PEM value")
+		}
+
+		rootCertPool := x509.NewCertPool()
+		if ok := rootCertPool.AppendCertsFromPEM(serverCAPem); !ok {
+			return fmt.Errorf("Failed to append server CA PEM")
+		}
+
+		clientCert := make([]tls.Certificate, 0, 1)
+		certs, err := tls.X509KeyPair(clientCertPem, clientKeyPem)
+		if err != nil {
+			return err
+		}
+
+		clientCert = append(clientCert, certs)
+		err = mysql.RegisterTLSConfig(o.DBTlsKeyName, &tls.Config{
+			RootCAs:      rootCertPool,
+			Certificates: clientCert,
+			ServerName:   o.DBTlsServerHostName,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	db, err = sql.Open(o.DBDriverName, o.DBDataSourceName)
 	if err != nil {
 		return err

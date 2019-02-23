@@ -31,6 +31,11 @@ type ServerOptions struct {
 	RedisChannelPrefix          string
 	DBDriverName                string
 	DBDataSourceName            string
+	DBTlsKeyName                string
+	DBTlsServerHostName         string
+	DBTlsServerCAPem            string
+	DBTlsClientCertPem          string
+	DBTlsClientKeyPem           string
 	OriginTableName             string
 	URLSignatureKey             string
 	URLSignatureSalt            string

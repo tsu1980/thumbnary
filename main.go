@@ -72,6 +72,11 @@ func main() {
 	viper.SetDefault("Database.RedisChannelPrefix", "thumbnary:")
 	viper.SetDefault("Database.DBDriverName", "mysql")
 	viper.SetDefault("Database.DBDataSourceName", "")
+	viper.SetDefault("Database.DBTlsKeyName", "")
+	viper.SetDefault("Database.DBTlsServerHostName", "")
+	viper.SetDefault("Database.DBTlsServerCAPem", "")
+	viper.SetDefault("Database.DBTlsClientCertPem", "")
+	viper.SetDefault("Database.DBTlsClientKeyPem", "")
 	viper.SetDefault("Database.OriginTableName", "origin")
 
 	if *aConfigFile != "" {
@@ -105,6 +110,11 @@ func main() {
 		RedisChannelPrefix:          config.Database.RedisChannelPrefix,
 		DBDriverName:                config.Database.DBDriverName,
 		DBDataSourceName:            config.Database.DBDataSourceName,
+		DBTlsKeyName:                config.Database.DBTlsKeyName,
+		DBTlsServerHostName:         config.Database.DBTlsServerHostName,
+		DBTlsServerCAPem:            config.Database.DBTlsServerCAPem,
+		DBTlsClientCertPem:          config.Database.DBTlsClientCertPem,
+		DBTlsClientKeyPem:           config.Database.DBTlsClientKeyPem,
 		OriginTableName:             config.Database.OriginTableName,
 		APIKey:                      config.Server.Key,
 		Concurrency:                 config.Server.Concurrency,
