@@ -89,7 +89,7 @@ func BimgOptions(o ImageOptions) bimg.Options {
 		Gravity9BottomCenter: bimg.GravitySouth,
 		Gravity9TopCenter:    bimg.GravityNorth,
 		Gravity9MiddleRight:  bimg.GravityEast,
-		Gravity9BottomLeft:   bimg.GravityWest,
+		Gravity9MiddleLeft:   bimg.GravityWest,
 		Gravity9MiddleCenter: bimg.GravityCentre,
 		Gravity9Smart:        bimg.GravitySmart,
 	}
